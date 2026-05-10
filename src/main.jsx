@@ -985,4 +985,58 @@ validation = function validation(c){
 };
 levelTasks = function levelTasks(c,to){ const tasks=[]; const sp=specialization(c); const gains=parseLevelTableFromText(sp?.originalText||''); for(let lvl=Number(c.level||1)+1; lvl<=to; lvl++){ tasks.push(`Nível ${lvl}: adicionar 1 dado de vida da especialização e recalcular PV máximo.`); tasks.push(`Nível ${lvl}: recalcular PE/Estamina, Defesa, Atenção, limites de perícia, talentos e aptidões.`); if(!(c.isRestricted||c.originId===ORIGIN.RESTRINGIDO)) tasks.push(`Nível ${lvl}: receber 1 Aptidão Amaldiçoada, respeitando pré-requisitos.`); if(lvl%4===0) tasks.push(`Nível ${lvl}: distribuir +2 pontos de atributo.`); if([5,9,13,17].includes(lvl)) tasks.push(`Nível ${lvl}: bônus de treinamento aumenta para ${trainingBonus(lvl)}.`); if(lvl===10) tasks.push('Nível 10: escolher 1 perícia treinada para se tornar Mestre.'); if(gains[lvl]) tasks.push(`${sp?.name||'Especialização'}, tabela de nível ${lvl}: ${gains[lvl]}.`); if(c.originId===ORIGIN.DERIVADO && lvl%4===0) tasks.push(`Derivado, nível ${lvl}: Desenvolvimento Inesperado concede +1 ponto e +1 limite no atributo escolhido.`); if(c.originId===ORIGIN.RESTRINGIDO && lvl%6===0) tasks.push(`Restringido, nível ${lvl}: Ápice Corporal concede +2 em Força, Destreza ou Constituição.`); if(fetoId(c.originId) && lvl%5===0) tasks.push(`Feto Amaldiçoado Híbrido, nível ${lvl}: recebe outra Característica de Anatomia.`); if(semTecnicaId(c.originId)){ if([3,13,17].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: aplicar bônus de Empenho Implacável em 2 perícias e em jogada de ataque ou TR.`); if([6,15,19].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: recebe habilidade de especialização adicional.`); if([1,10].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: recebe talento ou aptidão amaldiçoada à escolha.`); if(lvl===4) tasks.push('Sem Técnica, nível 4: recebe Novo Estilo da Sombra e Domínio Simples.'); if([8,12,16,20].includes(lvl)) tasks.push(`Novo Estilo da Sombra, nível ${lvl}: recebe técnica de estilo adicional.`); } if(c.originId===ORIGIN.HERDADO){ if(c.choices?.herdadoClan==='gojo' && lvl%2===0) tasks.push(`Clã Gojo, nível ${lvl}: +1 PE máximo adicional.`); if(c.choices?.herdadoClan==='kamo') tasks.push(`Clã Kamo, nível ${lvl}: +1 PV máximo adicional.`); if(['gojo','zenin'].includes(c.choices?.herdadoClan) && [5,10,15,20].includes(lvl)) tasks.push(`Clã ${herdadoClan(c)?.name||''}, nível ${lvl}: escolha adicional ligada a feitiço/foco do clã.`); } } tasks.push('Focos/Bônus de Interlúdio não são ganho automático de nível; o mestre/admin deve conceder manualmente.'); return [...new Set(tasks)]; };
 
+
+// =====================================================
+// v5.4 — Especializações revisadas: dados estruturados do livro
+// =====================================================
+function currentSpecRuleV54(c){ const sp=specialization(c); return sp?.specializationRules || rules.specializationRules?.[sp?.id] || {}; }
+function specBaseFeaturesV54(sp){ return Array.isArray(sp?.baseFeatures) ? sp.baseFeatures.map(f=>({id:f.id,title:f.title||f.name,level:f.minLevel||1,text:f.text||f.originalText||'',options:f.options||[]})) : []; }
+function specClassFeaturesV54(sp){ return Array.isArray(sp?.classFeatures) ? sp.classFeatures.map(f=>({id:f.id,title:f.title||f.name,level:f.minLevel||2,text:f.text||f.originalText||'',prereq:f.prereq||''})) : []; }
+parseClassFeaturesByLevel = function parseClassFeaturesByLevel(sp){
+  if(!sp) return {base:[], choicesByLevel:[], tables:[]};
+  const base=specBaseFeaturesV54(sp);
+  const by={};
+  for(const f of specClassFeaturesV54(sp)){ const lvl=Number(f.level||2); if(!by[lvl]) by[lvl]=[]; by[lvl].push(f); }
+  const choicesByLevel=Object.keys(by).map(Number).sort((a,b)=>a-b).map(level=>({level,title:`Habilidades de ${level}º nível`,abilities:by[level]}));
+  const table=sp.levelTable||{};
+  const tableText=Object.entries(table).map(([lvl,gain])=>`${lvl}º ${gain}`).join('\n');
+  const tables=tableText?[{id:`${sp.id}_table_structured`,title:'Tabela de ganhos por nível',text:tableText}]:[];
+  return {base, choicesByLevel, tables};
+};
+specTrainingConfig = function specTrainingConfig(c){
+  const sr=currentSpecRuleV54(c); const allSkills=trainableSkills().map(s=>s.id);
+  return {resAllowed:sr.resAllowed||['astucia','fortitude','integrity','reflexes','will'],resMax:sr.resMax??1,resFixed:sr.resFixed||[],skillAllowed:allSkills.filter(id=>!(sr.skillForbidden||[]).includes(id)),skillBaseAllowed:sr.skillBaseAllowed||[],skillBaseNeed:sr.skillBaseNeed||0,skillAnyNeed:sr.skillAnyNeed??0,skillForbidden:sr.skillForbidden||[],masterMax:masterSkillLimit(c),masteryText:(sr.masteries||[]).join(', ')||'Sem maestrias cadastradas.',notes:`${specialization(c)?.name||'Especialização'}: ${sr.resFixed?.length?'resistências fixas':'escolha resistência permitida'}; ${sr.skillBaseNeed||0} perícia(s) do grupo obrigatório + ${sr.skillAnyNeed||0} perícia(s) livres.`};
+};
+skillLimit = function skillLimit(c){ const cfg=specTrainingConfig(c); return cfg.skillBaseNeed + cfg.skillAnyNeed + extraSkillSlots(c); };
+resistanceLimit = function resistanceLimit(c){ return specTrainingConfig(c).resMax; };
+function specializationEnergyBonusV54(c){ const sr=currentSpecRuleV54(c); if(!sr.energyAddsAttribute) return 0; const k=c.energyAttribute||c.cdAttribute||sr.cdAttributes?.[0]; return Math.max(0, mod(finalAttr(c,k))); }
+calc = function calc(c){
+  const lvl=Number(c.level)||1, con=mod(finalAttr(c,'constitution')), dex=mod(finalAttr(c,'dexterity'));
+  const sp=specialization(c); const sr=currentSpecRuleV54(c); const uniform=c.inventory.items.find(i=>i.type==='uniform'&&i.equipped); const shield=c.inventory.items.find(i=>i.type==='shield'&&i.equipped);
+  const hpBase=sr.hpBase||sp?.hpBase||10, hpPer=sr.hpPerLevel||sp?.hpPerLevel||5, pePer=sr.energyPerLevel??sp?.energyPerLevel??0;
+  const hpMax=Math.max(1,hpBase+con+(lvl-1)*(hpPer+Math.max(0,con)) + accessoryBonus(c,'hp') + originExtraHp(c));
+  const peMax=(sr.stamina||c.isRestricted||c.originId===ORIGIN.RESTRINGIDO)?0:Math.max(0,pePer*lvl + specializationEnergyBonusV54(c) + accessoryBonus(c,'pe') + originExtraPe(c));
+  const movement=9 + accessoryBonus(c,'movement') + originMovementBonus(c); const defense=10+dex+Math.floor(lvl/2)+(uniform?.defenseBonus||0)+accessoryBonus(c,'defense');
+  const skillMap=Object.fromEntries(rules.skills.map(s=>[s.id, skillBonus(c,s)])); const attention=10+(skillMap.percepcao||0)+accessoryBonus(c,'attention')+originAttentionBonus(c);
+  return {level:lvl,tb:trainingBonus(lvl),hpMax,peMax,soulMax:hpMax,movement,defense,attention,initiative:dex+accessoryBonus(c,'initiative')+originInitiativeBonus(c),rd:shield?.rd||0,skillMap};
+};
+levelTasks = function levelTasks(c,to){
+  const tasks=[]; const sp=specialization(c); const table=sp?.levelTable||{}; const sr=currentSpecRuleV54(c);
+  for(let lvl=Number(c.level||1)+1; lvl<=to; lvl++){
+    tasks.push(`Nível ${lvl}: adicionar 1 dado de vida (${sr.hitDie||sp?.hitDie||'dado da especialização'}) e recalcular PV máximo.`);
+    tasks.push(`Nível ${lvl}: recalcular PE/Estamina, Defesa, Atenção, limites de perícia, talentos e aptidões.`);
+    if(!(c.isRestricted||c.originId===ORIGIN.RESTRINGIDO)) tasks.push(`Nível ${lvl}: receber 1 Aptidão Amaldiçoada, respeitando pré-requisitos.`);
+    if(table[String(lvl)]) tasks.push(`${sp?.name||'Especialização'}, tabela de nível ${lvl}: ${table[String(lvl)]}.`);
+    if(lvl%4===0) tasks.push(`Nível ${lvl}: distribuir +2 pontos de atributo.`);
+    if([5,9,13,17].includes(lvl)) tasks.push(`Nível ${lvl}: bônus de treinamento aumenta para ${trainingBonus(lvl)}.`);
+    if(lvl===10) tasks.push('Nível 10: escolher 1 perícia treinada para se tornar Mestre.');
+    if(c.originId===ORIGIN.DERIVADO && lvl%4===0) tasks.push(`Derivado, nível ${lvl}: Desenvolvimento Inesperado concede +1 ponto e +1 limite no atributo escolhido.`);
+    if(c.originId===ORIGIN.RESTRINGIDO && lvl%6===0) tasks.push(`Restringido, nível ${lvl}: Ápice Corporal concede +2 em Força, Destreza ou Constituição.`);
+    if(fetoId(c.originId) && lvl%5===0) tasks.push(`Feto Amaldiçoado Híbrido, nível ${lvl}: recebe outra Característica de Anatomia.`);
+    if(semTecnicaId(c.originId)){ if([3,13,17].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: aplicar bônus de Empenho Implacável em 2 perícias e em jogada de ataque ou TR.`); if([6,15,19].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: recebe habilidade de especialização adicional.`); if([1,10].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: recebe talento ou aptidão amaldiçoada à escolha.`); if(lvl===4) tasks.push('Sem Técnica, nível 4: recebe Novo Estilo da Sombra e Domínio Simples.'); if([8,12,16,20].includes(lvl)) tasks.push(`Novo Estilo da Sombra, nível ${lvl}: recebe técnica de estilo adicional.`); }
+    if(c.originId===ORIGIN.HERDADO){ if(c.choices?.herdadoClan==='gojo' && lvl%2===0) tasks.push(`Clã Gojo, nível ${lvl}: +1 PE máximo adicional.`); if(c.choices?.herdadoClan==='kamo') tasks.push(`Clã Kamo, nível ${lvl}: +1 PV máximo adicional.`); if(['gojo','zenin'].includes(c.choices?.herdadoClan) && [5,10,15,20].includes(lvl)) tasks.push(`Clã ${herdadoClan(c)?.name||''}, nível ${lvl}: escolha adicional ligada a feitiço/foco do clã.`); }
+  }
+  tasks.push('Focos/Bônus de Interlúdio não são ganho automático de nível; o mestre/admin deve conceder manualmente.'); return [...new Set(tasks)];
+};
+
 createRoot(document.getElementById('root')).render(<App/>);
