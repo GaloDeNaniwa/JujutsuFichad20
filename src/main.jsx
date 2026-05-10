@@ -17,6 +17,47 @@ const ATTRIBUTE_HELP = {strength:'Força mede potência física: ataques e manob
 const RESISTANCE_HELP = {astucia:'Astúcia é usada contra efeitos que exigem raciocínio, leitura, truques mentais ou reação intelectual.',fortitude:'Fortitude é usada contra efeitos físicos, venenos, dor, exaustão e resistência corporal.',integrity:'Integridade protege a estabilidade interna, alma, corpo e efeitos que atacam sua essência.',reflexes:'Reflexos é usado para evitar explosões, armadilhas, ataques em área e ameaças que dependem de reação rápida.',will:'Vontade é usada contra medo, compulsão, domínio mental, pressão espiritual e efeitos que desafiam determinação.'};
 const SKILL_HELP = {acrobacia:'Acrobacia cobre equilíbrio, cambalhotas, quedas, saltos precisos, escapar de posições ruins e movimentos corporais complexos.',atletismo:'Atletismo cobre correr, saltar, nadar, escalar, empurrar, puxar, agarrar e feitos de força física.',direcao:'Direção cobre conduzir veículos, montarias ou movimentação controlada em deslocamento arriscado.',enganacao:'Enganação cobre mentir, blefar, disfarçar intenções e manipular informações falsas.',feiticaria:'Feitiçaria cobre conhecimento e execução de energia amaldiçoada, feitiços, técnicas e fenômenos jujutsu.',furtividade:'Furtividade cobre se esconder, se mover sem ser notado e agir silenciosamente.',historia:'História cobre conhecimento histórico, eventos, linhagens, organizações e registros relevantes.',intimidacao:'Intimidação cobre ameaçar, pressionar e impor presença para obter reação social.',intuicao:'Intuição cobre perceber intenção, mentira, emoção e riscos sutis.',investigacao:'Investigação cobre buscar pistas, interpretar detalhes e conectar evidências.',medicina:'Medicina cobre estabilizar, tratar ferimentos, diagnosticar condições e lidar com cuidados físicos.',ocultismo:'Ocultismo cobre conhecimento de maldições, rituais, barreiras, entidades e fenômenos sobrenaturais.',oficio:'Ofício exige especificar uma profissão/ferramenta. Ex.: Ferreiro, Alfaiate, Alquimia, Canalizador.',percepcao:'Percepção cobre notar ameaças, sons, movimento, detalhes visuais e emboscadas. Também alimenta Atenção.',performance:'Performance cobre atuação, música, presença pública e apresentação artística/social.',persuasao:'Persuasão cobre convencer, negociar, pedir ajuda e influenciar sem ameaça direta.',prestidigitacao:'Prestidigitação cobre truques manuais, esconder objetos, saques rápidos e manipulação fina.',sobrevivencia:'Sobrevivência cobre rastrear, se orientar, resistir em ambientes hostis e lidar com natureza.',tecnologia:'Tecnologia cobre operar, entender e consertar dispositivos modernos.',teologia:'Teologia cobre religiões, doutrinas, símbolos espirituais e tradição sagrada.'};
 
+// v5.2 — origem Herdado por clã
+const HERDADO_CLANS = [
+  {
+    id:'gojo', name:'Clã Gojo', attrs:['intelligence','wisdom'], techniques:'Seis Olhos, Ilimitado',
+    skills:['feiticaria','percepcao','intuicao'],
+    featureName:'Potencial Lendário',
+    featureText:'Ser parte do clã Gojo confere um potencial de energia extremo, juntamente de uma facilidade para desenvolver feitiços. Em todo nível par você recebe 1 ponto de energia amaldiçoada adicional. Além disso, você também recebe 1 Feitiço adicional no primeiro nível e mais um nos níveis 5, 10, 15 e 20.',
+    originalText:'CLÃ GOJO\nO Clã Gojo descende de um lendário feiticeiro antigo de Jujutsu, Michizane Sugawara, e tem como técnicas herdadas o Ilimitado e os Seis Olhos, que juntos tem um poder enorme. O membro de maior destaque é Satoru Gojo, o feiticeiro mais forte, cujo poder sozinho é capaz de manter o clã Gojo entre os maiores e mais respeitados.\n\nCARACTERÍSTICAS DE CLÃ\nCaso seu personagem seja do clã Gojo, recebe os seguintes benefícios:\nBônus em Atributo. Aumenta em 2 a Inteligência ou Sabedoria, e em 1 o que não foi escolhido.\nTreinamentos de Clã. Você se torna treinado em 2 perícias entre Feitiçaria, Percepção e Intuição. Ao invés de receber treinamento em 2 perícias, você pode escolher se tornar especialista em uma.\nPotencial Lendário. Ser parte do clã Gojo confere um potencial de energia extremo, juntamente de uma facilidade para desenvolver feitiços. Em todo nível par você recebe 1 ponto de energia amaldiçoada adicional. Além disso, você também recebe 1 Feitiço adicional no primeiro nível e mais um nos níveis 5, 10, 15 e 20.'
+  },
+  {
+    id:'inumaki', name:'Clã Inumaki', attrs:['intelligence','presence'], techniques:'Fala Amaldiçoada',
+    skills:['feiticaria','percepcao','intuicao'],
+    featureName:'Olhos de Cobra e Presas',
+    featureText:'Os membros do clã Inumaki possuem uma marca única ao redor de sua boca, a qual tem a forma dos olhos de uma cobra e presas. Remetendo à técnica herdada do clã, essa marca já concede algum poder as palavras de um Inumaki: uma quantidade de vezes igual ao seu bônus de treinamento, você pode dar o comando de uma ação bônus para um aliado, o qual pode a realizar como uma reação. Você recupera os usos dessa habilidade após um descanso longo.',
+    originalText:'CLÃ INUMAKI\nO Clã Inumaki é uma das várias famílias menores. Embora não sejam considerados um dos clãs maiores, sua técnica amaldiçoada, Fala Amaldiçoada, é bem respeitada. Possuem um sigilo característico da família, que são os emblemas ao redor da boca do usuário da técnica. O membro de maior destaque é Toge Inumaki.\n\nCARACTERÍSTICAS DE CLÃ\nCaso seu personagem seja do clã Inumaki, ele recebe os seguintes benefícios:\nBônus em Atributo. Aumenta em 2 a Inteligência ou Presença, e em 1 o que não foi escolhido.\nTreinamentos de Clã. Você se torna treinado em 2 perícias entre Feitiçaria, Percepção e Intuição. Ao invés de receber treinamento em 2 perícias, você pode escolher se tornar especialista em uma.\nOlhos de Cobra e Presas. Os membros do clã Inumaki possuem uma marca única ao redor de sua boca, a qual tem a forma dos olhos de uma cobra e presas. Remetendo à técnica herdada do clã, essa marca já concede algum poder as palavras de um Inumaki: uma quantidade de vezes igual ao seu bônus de treinamento, você pode dar o comando de uma ação bônus para um aliado, o qual pode a realizar como uma reação. Você recupera os usos dessa habilidade após um descanso longo.'
+  },
+  {
+    id:'kamo', name:'Clã Kamo', attrs:['constitution','wisdom'], techniques:'Manipulação Sanguínea',
+    skills:['atletismo','medicina','persuasao'],
+    featureName:'Valor do Sangue',
+    featureText:'Os membros do Clã Kamo compreendem o valor do sangue, e isso os dá uma maior vitalidade. Sempre que subir de nível, sua vida máxima aumenta em 1 ponto adicional. A partir do nível 10, você soma o seu modificador de Constituição ao seu total de vida. Caso, ao subir de nível, você role para aumentar a sua vida máxima e o valor obtido seja menor do que a média, você pode rolar novamente e ficar com o maior valor.',
+    originalText:'CLÃ KAMO\nO Clã Kamo valoriza grandemente os laços de sangue, e herdar a sua técnica é o foco. A sua técnica herdada é a Manipulação de Sangue, herdada pelo membro de maior destaque, que é Noritoshi Kamo. Sua técnica é admirada pelo equilíbrio fornecido e por ser perfeita para aqueles que valorizam o sangue.\n\nCARACTERÍSTICAS DE CLÃ\nCaso seu personagem seja do clã Kamo, recebe os seguintes benefícios:\nBônus em Atributo. Aumenta em 2 a Constituição ou Sabedoria, e em 1 o que não foi escolhido.\nTreinamentos de Clã. Você se torna treinado em 2 perícias entre Atletismo, Medicina e Persuasão. Ao invés de receber treinamento em 2 perícias, você pode escolher se tornar especialista em uma.\nValor do Sangue. Os membros do Clã Kamo compreendem o valor do sangue, e isso os dá uma maior vitalidade. Sempre que subir de nível, sua vida máxima aumenta em 1 ponto adicional. A partir do nível 10, você soma o seu modificador de Constituição ao seu total de vida. Caso, ao subir de nível, você role para aumentar a sua vida máxima e o valor obtido seja menor do que a média, você pode rolar novamente e ficar com o maior valor.'
+  },
+  {
+    id:'zenin', name:'Clã Zenin', attrs:['strength','dexterity','constitution','intelligence','wisdom','presence'], techniques:'Dez Sombras, Projeção',
+    skills:'any',
+    featureName:'Foco no Poder',
+    featureText:'O clã Zenin se dedica completamente ao poder e aprimoramento das suas técnicas, ampliando o potencial delas e de suas habilidades. No primeiro nível, você pode escolher um Feitiço para ser um Feitiço Focado. Um Feitiço Focado pode: causar um dado de dano a mais, curar um dado de vida a mais, ter o dobro do alcance ou ter a dificuldade do teste para resistir aumentada em um valor igual ao seu bônus de treinamento. Nos níveis 5, 10, 15 e 20 você pode escolher outro Feitiço para ser um Feitiço Focado.',
+    originalText:'CLÃ ZENIN\nO Clã Zenin incorpora todos os valores nobres de um clã maior, acreditando que técnicas amaldiçoadas poderosas são mais importantes do que tudo. Entretanto, às vezes isso acarreta em problemáticas diante aqueles feiticeiros que não se desenvolvem muito. Possuem várias técnicas herdadas, com grande variedade, mas mantendo o poder e potencial elevado.\n\nCARACTERÍSTICAS DE CLÃ\nCaso seu personagem seja do clã Zenin, recebe os seguintes benefícios:\nBônus em Atributo. Um membro do clã Zenin aumenta o valor de um atributo em 2 pontos o de outro em 1 ponto.\nTreinamentos de Clã. Você se torna treinado em 2 perícias quaisquer. Ao invés de receber treinamento em 2 perícias, você pode escolher se tornar especialista em uma.\nFoco no Poder. O clã Zenin se dedica completamente ao poder e aprimoramento das suas técnicas, ampliando o potencial delas e de suas habilidades. No primeiro nível, você pode escolher um Feitiço para ser um Feitiço Focado. Um Feitiço Focado pode: causar um dado de dano a mais, curar um dado de vida a mais, ter o dobro do alcance ou ter a dificuldade do teste para resistir aumentada em um valor igual ao seu bônus de treinamento. Nos níveis 5, 10, 15 e 20 você pode escolher outro Feitiço para ser um Feitiço Focado.'
+  }
+];
+function herdadoClan(c){ return HERDADO_CLANS.find(x=>x.id===c.choices?.herdadoClan); }
+function herdadoClanSkillPool(c){ const clan=herdadoClan(c); if(!clan) return []; return clan.skills==='any' ? trainableSkills().map(s=>s.id) : clan.skills; }
+function herdadoClanTrainedSkills(c){ if(c.originId!=='herdado') return []; const clan=herdadoClan(c); if(!clan) return []; const mode=c.choices?.herdadoClanTrainingMode||'trained'; if(mode==='master') return c.choices?.herdadoClanMasterSkill ? [c.choices.herdadoClanMasterSkill] : []; const pool=herdadoClanSkillPool(c); return clampSelection(c.choices?.herdadoClanTrainedSkills||[], pool, 2); }
+function herdadoClanMasterSkills(c){ if(c.originId!=='herdado') return []; return c.choices?.herdadoClanTrainingMode==='master' && c.choices?.herdadoClanMasterSkill ? [c.choices.herdadoClanMasterSkill] : []; }
+function herdadoClanTrainingResolved(c){ if(c.originId!=='herdado') return true; const clan=herdadoClan(c); if(!clan) return false; const mode=c.choices?.herdadoClanTrainingMode||'trained'; if(mode==='master') return !!c.choices?.herdadoClanMasterSkill && herdadoClanSkillPool(c).includes(c.choices.herdadoClanMasterSkill); return herdadoClanTrainedSkills(c).length===2; }
+function herdadoExtraEnergy(c){ if(c.originId==='herdado' && c.choices?.herdadoClan==='gojo') return Math.floor(Number(c.level||1)/2); return 0; }
+function herdadoExtraHp(c){ if(c.originId==='herdado' && c.choices?.herdadoClan==='kamo') return Number(c.level||1) + (Number(c.level||1)>=10 ? Math.max(0,mod(finalAttr(c,'constitution'))) : 0); return 0; }
+function herdadoExtraSpellSlots(c){ if(c.originId!=='herdado') return 0; const lvl=Number(c.level||1); if(c.choices?.herdadoClan==='gojo') return 1 + [5,10,15,20].filter(x=>lvl>=x).length; if(c.choices?.herdadoClan==='zenin') return 1 + [5,10,15,20].filter(x=>lvl>=x).length; return 0; }
+
+
 function uid(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
 function mod(v){ if(v==null || Number.isNaN(Number(v))) return 0; return Math.floor((Number(v)-10)/2); }
 function signed(n){ return n>=0?`+${n}`:`${n}`; }
@@ -92,7 +133,7 @@ function reducer(state, action){
     case 'tab': return {...state, activeTab:action.tab};
     case 'newCharacter': { const c=emptyCharacter(); return {...state, activeCharacterId:c.id, characters:[...state.characters,c], activeTab:'Criação Guiada'}; }
     case 'selectCharacter': return {...state, activeCharacterId:action.id};
-    case 'update': return withChar(c=>{ const next={...c,[action.key]:action.value}; if(action.key==='originId'){ next.choices={...next.choices, originBonuses:{}, originBonusAlloc:{}, restringidoApexAttrs:[], [DERIVADO_LIMIT_ATTR_KEY]:''}; next.attributes={...next.attributes, originBonuses:{}}; next.isRestricted=action.value==='restringido'; if(action.value==='restringido') next.specializationId='restringido'; } if(action.key==='specializationId'){ const cfg=specTrainingConfig(next); next.choices={...next.choices, resistances:[...new Set([...(cfg.resFixed||[]), ...(next.choices.resistances||[])])].slice(0,cfg.resMax)}; } return next; });
+    case 'update': return withChar(c=>{ const next={...c,[action.key]:action.value}; if(action.key==='originId'){ next.choices={...next.choices, originBonuses:{}, originBonusAlloc:{}, herdadoClan:'', herdadoClanBonusMain:'', herdadoClanTrainingMode:'trained', herdadoClanTrainedSkills:[], herdadoClanMasterSkill:'', herdadoFocusedSpells:[], restringidoApexAttrs:[], [DERIVADO_LIMIT_ATTR_KEY]:''}; next.attributes={...next.attributes, originBonuses:{}}; next.isRestricted=action.value==='restringido'; if(action.value==='restringido') next.specializationId='restringido'; } if(action.key==='specializationId'){ const cfg=specTrainingConfig(next); next.choices={...next.choices, resistances:[...new Set([...(cfg.resFixed||[]), ...(next.choices.resistances||[])])].slice(0,cfg.resMax)}; } return next; });
     case 'patch': return withChar(c=>({...c, ...action.patch}));
     case 'identity': return withChar(c=>({...c, identity:{...c.identity, [action.key]:action.value}}));
     case 'choice': return withChar(c=>({...c, choices:{...c.choices, [action.key]:action.value}}));
@@ -137,6 +178,7 @@ function rollValue(c, rollId){ return latestRollSet(c)?.rolls.find(r=>r.id===rol
 
 function originBonusConfig(c){
   const id=c.originId;
+  if(id==='herdado'){ const clan=herdadoClan(c); if(!clan) return {mode:'herdado', title:'Herdado', fixed:{}, pool:0, allowed:[], maxPer:0, text:'Escolha um clã para liberar o bônus correto.'}; return {mode:'herdado', title:clan.name, fixed:{}, clan, pool:0, allowed:clan.attrs, maxPer:2, text:clan.id==='zenin'?'Clã Zenin: escolha um atributo para +2 e outro diferente para +1.':`${clan.name}: escolha qual dos dois atributos do clã recebe +2; o outro recebe +1.`}; }
   if(id==='restringido') return {mode:'pool', title:'Restringido', fixed:{strength:1,dexterity:1,constitution:1}, pool:2, allowed:['strength','dexterity','constitution'], maxPer:2, text:'Força, Destreza e Constituição +1. Depois distribua +2 apenas entre atributos físicos.'};
   if(id==='sem_técnica') return {mode:'pool', title:'Sem Técnica', fixed:{}, pool:4, allowed:ATTRS.map(a=>a[0]), maxPer:3, text:'Distribua 4 pontos entre atributos, máximo 3 no mesmo atributo.'};
   if(id==='corpo_amaldiçoado_mutante') return {mode:'pool', title:'Corpo Amaldiçoado Mutante', fixed:{}, pool:2, allowed:ATTRS.map(a=>a[0]), maxPer:2, text:'Distribua 2 pontos entre atributos.'};
@@ -149,6 +191,12 @@ function originBonusValue(c,k){
   if(cfg.mode==='split'){
     if(c.choices?.originBonuses?.b2===k) v+=2;
     if(c.choices?.originBonuses?.b1===k) v+=1;
+  } else if(cfg.mode==='herdado'){
+    const clan=cfg.clan;
+    if(clan){
+      if(clan.id==='zenin'){ if(c.choices?.originBonuses?.b2===k) v+=2; if(c.choices?.originBonuses?.b1===k) v+=1; }
+      else { const main=c.choices?.herdadoClanBonusMain; if(main===k) v+=2; else if(clan.attrs.includes(k)) v+=1; }
+    }
   } else if(cfg.mode==='pool') v += Number(originBonusAllocation(c)[k]||0);
   return v;
 }
@@ -157,10 +205,30 @@ function originBonusResolved(c){
   const cfg=originBonusConfig(c);
   if(cfg.mode==='none') return false;
   if(cfg.mode==='split') return !!c.choices?.originBonuses?.b2 && !!c.choices?.originBonuses?.b1 && c.choices.originBonuses.b2!==c.choices.originBonuses.b1;
+  if(cfg.mode==='herdado'){ const clan=herdadoClan(c); if(!clan) return false; if(clan.id==='zenin') return !!c.choices?.originBonuses?.b2 && !!c.choices?.originBonuses?.b1 && c.choices.originBonuses.b2!==c.choices.originBonuses.b1; return !!c.choices?.herdadoClanBonusMain && clan.attrs.includes(c.choices.herdadoClanBonusMain); }
   if(cfg.mode==='pool') return originBonusSpent(c)===cfg.pool && Object.entries(originBonusAllocation(c)).every(([k,v])=>cfg.allowed.includes(k) && Number(v)<=cfg.maxPer);
   return false;
 }
+
+function HerdadoOriginPanel({c,dispatch}){
+  const clan=herdadoClan(c); const cfg=originBonusConfig(c); const pool=herdadoClanSkillPool(c); const mode=c.choices?.herdadoClanTrainingMode||'trained'; const trained=herdadoClanTrainedSkills(c); const [modal,setModal]=useState(null);
+  return <div className="choiceBlock herdadoPanel"><h3>Origem Herdado — escolha de clã</h3><p className="muted">Herdado não usa bônus genérico. Primeiro escolha o clã; depois o app libera os atributos, treinamentos e herança daquele clã.</p>
+    <Field label="Clã"><Select value={c.choices?.herdadoClan||''} onChange={v=>{ dispatch({type:'choice',key:'herdadoClan',value:v}); dispatch({type:'choice',key:'herdadoClanBonusMain',value:''}); dispatch({type:'choice',key:'herdadoClanTrainedSkills',value:[]}); dispatch({type:'choice',key:'herdadoClanMasterSkill',value:''}); }}><option value="">Escolha o clã</option>{HERDADO_CLANS.map(cl=><option key={cl.id} value={cl.id}>{cl.name} — {cl.techniques}</option>)}</Select></Field>
+    {clan&&<><div className="notice"><b>Técnicas/Jujutsus herdados:</b> {clan.techniques}</div><button onClick={()=>setModal(clan)}>Ver texto completo do clã</button>
+      <h4>Bônus em Atributo</h4>{clan.id==='zenin'?<div className="grid2"><Field label="+2 em atributo"><Select value={c.choices.originBonuses?.b2||''} onChange={v=>dispatch({type:'choiceObject',key:'originBonuses',id:'b2',value:v})}><option value="">—</option>{ATTRS.map(([k,l])=><option key={k} value={k} disabled={c.choices.originBonuses?.b1===k}>{l}</option>)}</Select></Field><Field label="+1 em atributo"><Select value={c.choices.originBonuses?.b1||''} onChange={v=>dispatch({type:'choiceObject',key:'originBonuses',id:'b1',value:v})}><option value="">—</option>{ATTRS.map(([k,l])=><option key={k} value={k} disabled={c.choices.originBonuses?.b2===k}>{l}</option>)}</Select></Field></div>:<Field label={`Escolha qual atributo recebe +2. O outro atributo do ${clan.name} recebe +1 automaticamente.`}><Select value={c.choices?.herdadoClanBonusMain||''} onChange={v=>dispatch({type:'choice',key:'herdadoClanBonusMain',value:v})}><option value="">Escolha</option>{clan.attrs.map(k=><option key={k} value={k}>{ATTR_LABEL[k]}</option>)}</Select></Field>}
+      <h4>Treinamentos de Clã</h4><div className="notice">Escolha <b>2 perícias treinadas</b> entre as opções do clã OU escolha <b>1 perícia especialista/mestre</b>. Essas perícias são da origem e não gastam o limite normal da especialização.</div><Field label="Modo de treinamento do clã"><Select value={mode} onChange={v=>{dispatch({type:'choice',key:'herdadoClanTrainingMode',value:v}); dispatch({type:'choice',key:'herdadoClanTrainedSkills',value:[]}); dispatch({type:'choice',key:'herdadoClanMasterSkill',value:''});}}><option value="trained">Treinado em 2 perícias</option><option value="master">Especialista/Mestre em 1 perícia</option></Select></Field>
+      {mode==='trained'?<LimitedChoiceGrid title={`Perícias do clã (${trained.length}/2)`} items={pool.map(id=>({...rules.skills.find(s=>s.id===id), originalText:SKILL_HELP[id]})).filter(Boolean)} selected={trained} limit={2} onChange={arr=>dispatch({type:'choice',key:'herdadoClanTrainedSkills',value:arr.slice(0,2)})}/>:<Field label="Perícia especialista/mestre do clã"><Select value={c.choices?.herdadoClanMasterSkill||''} onChange={v=>dispatch({type:'choice',key:'herdadoClanMasterSkill',value:v})}><option value="">Escolha</option>{pool.map(id=><option key={id} value={id}>{skillName(id)}</option>)}</Select></Field>}
+      <h4>Herança de Clã</h4><RuleBox title={clan.featureName} text={clan.featureText}/>
+      {clan.id==='gojo'&&<div className="notice"><b>Automático:</b> +{herdadoExtraEnergy(c)} PE por níveis pares. Feitiços adicionais no 1º, 5º, 10º, 15º e 20º: {herdadoExtraSpellSlots(c)}.</div>}
+      {clan.id==='kamo'&&<div className="notice"><b>Automático:</b> +{herdadoExtraHp(c)} PV máximo pela herança Valor do Sangue.</div>}
+      {clan.id==='zenin'&&<div className="notice"><b>Controle:</b> Feitiços Focados disponíveis: {herdadoExtraSpellSlots(c)}. Registre quais feitiços foram escolhidos na área de Técnica.</div>}
+      {clan.id==='inumaki'&&<div className="notice"><b>Usos:</b> Olhos de Cobra e Presas usa bônus de treinamento: {trainingBonus(c.level)} uso(s) por descanso longo.</div>}
+    </>}
+    {modal&&<ModalText title={modal.name} text={modal.originalText} onClose={()=>setModal(null)}/>} 
+  </div>
+}
 function OriginBonusPanel({c,dispatch}){
+  if(c.originId==='herdado') return <HerdadoOriginPanel c={c} dispatch={dispatch}/>;
   const cfg=originBonusConfig(c);
   if(cfg.mode==='none') return <div className="notice">Escolha uma origem para liberar os bônus corretos.</div>;
   if(cfg.mode==='split') return <div className="choiceBlock"><h3>Bônus de Origem</h3><p className="muted">{cfg.text}</p><div className="grid2"><Field label="+2 em atributo"><Select value={c.choices.originBonuses?.b2||''} onChange={v=>dispatch({type:'choiceObject',key:'originBonuses',id:'b2',value:v})}><option value="">—</option>{ATTRS.map(([k,l])=><option key={k} value={k} disabled={c.choices.originBonuses?.b1===k}>{l}</option>)}</Select></Field><Field label="+1 em atributo"><Select value={c.choices.originBonuses?.b1||''} onChange={v=>dispatch({type:'choiceObject',key:'originBonuses',id:'b1',value:v})}><option value="">—</option>{ATTRS.map(([k,l])=><option key={k} value={k} disabled={c.choices.originBonuses?.b2===k}>{l}</option>)}</Select></Field></div></div>;
@@ -220,16 +288,16 @@ function origin(c){ return rules.origins.find(o=>o.id===c.originId); }
 
 function selectedManualSkills(c){ return c.choices?.skills || []; }
 function talentGrantedSkills(c){ const out=[]; if(hasTalentByName(c,'Tempestade De Ideias') && c.choices?.tempestadeSkill) out.push(c.choices.tempestadeSkill); if(hasTalentByName(c,'Artesão Amaldiçoado') && c.choices?.artesaoOficio) out.push('oficio'); return [...new Set(out)]; }
-function selectedTrainedSkills(c){ return [...new Set([...selectedManualSkills(c), ...talentGrantedSkills(c)])]; }
+function selectedTrainedSkills(c){ return [...new Set([...selectedManualSkills(c), ...talentGrantedSkills(c), ...herdadoClanTrainedSkills(c)])]; }
 function masterSkillLimit(c){ let n=Number(c.level||1)>=10?1:0; if(hasTalentByName(c,'Tempestade De Ideias')) n+=1; return n; }
-function selectedMasterSkills(c){ return c.choices?.masterSkills || []; }
+function selectedMasterSkills(c){ return [...new Set([...(c.choices?.masterSkills || []), ...herdadoClanMasterSkills(c)])]; }
 function calc(c){
   const lvl=Number(c.level)||1, tb=trainingBonus(lvl), con=mod(finalAttr(c,'constitution')), dex=mod(finalAttr(c,'dexterity')), wis=mod(finalAttr(c,'wisdom'));
   const sp=specialization(c); const uniform=c.inventory.items.find(i=>i.type==='uniform'&&i.equipped); const shield=c.inventory.items.find(i=>i.type==='shield'&&i.equipped);
   const uniformDef=uniform?.defenseBonus||0; const shieldRd=shield?.rd||0;
   const hpBase=sp?.hpBase||10, hpPer=sp?.hpPerLevel||5, pePer=sp?.energyPerLevel||0;
-  const hpMax=Math.max(1,hpBase+con+(lvl-1)*(hpPer+Math.max(0,con)) + accessoryBonus(c,'hp'));
-  const peMax=c.isRestricted?0:Math.max(0,pePer*lvl + accessoryBonus(c,'pe'));
+  const hpMax=Math.max(1,hpBase+con+(lvl-1)*(hpPer+Math.max(0,con)) + accessoryBonus(c,'hp') + herdadoExtraHp(c));
+  const peMax=c.isRestricted?0:Math.max(0,pePer*lvl + accessoryBonus(c,'pe') + herdadoExtraEnergy(c));
   const movement=9 + accessoryBonus(c,'movement');
   const defense=10+dex+Math.floor(lvl/2)+uniformDef+accessoryBonus(c,'defense');
   const skillMap=Object.fromEntries(rules.skills.map(s=>[s.id, skillBonus(c,s)]));
@@ -298,6 +366,7 @@ function validation(c){
   add('rolls','Rolar atributos 4d6 descartando o menor',!!latestRollSet(c),'Criação Guiada','Atributos começam vazios.');
   add('assign','Distribuir os 6 resultados rolados',ATTRS.every(([k])=>c.attributes.assigned[k]),'Criação Guiada','Cada atributo deve receber um resultado.');
   add('origin','Escolher Origem',!!c.originId,'Criação Guiada');
+  if(c.originId==='herdado'){ const clan=herdadoClan(c); add('herdadoClan','Herdado: escolher clã',!!clan,'Criação Guiada','Clã Gojo, Inumaki, Kamo ou Zenin.'); add('herdadoClanTraining','Herdado: resolver Treinamentos de Clã',herdadoClanTrainingResolved(c),'Criação Guiada','Escolha 2 perícias treinadas do clã ou 1 perícia especialista/mestre.'); }
   add('originBonus','Resolver bônus da Origem',originBonusResolved(c),'Criação Guiada','Cada Origem tem sua própria regra de bônus; distribua conforme o texto da Origem.');
   add('spec','Escolher Especialização',!!c.specializationId,'Criação Guiada');
   add('cd','Escolher atributo de CD',!!c.cdAttribute,'Criação Guiada');
@@ -431,6 +500,7 @@ validation = function validation(c){
   if(c.originId==='derivado') add('derivedLimitAttr','Derivado: escolher atributo de Desenvolvimento Inesperado',!!c.choices?.[DERIVADO_LIMIT_ATTR_KEY],'Criação Guiada','Este atributo recebe o aumento de limite da origem.');
   if(c.originId==='restringido') add('restrictedApex','Restringido: Ápice Corporal conforme nível',getSelectedArrayChoice(c,'restringidoApexAttrs').length<=Math.floor(Number(c.level||1)/6),'Criação Guiada','Escolha até 1 atributo físico a cada 6 níveis.');
   add('origin','Escolher Origem',!!c.originId,'Criação Guiada');
+  if(c.originId==='herdado'){ const clan=herdadoClan(c); add('herdadoClan','Herdado: escolher clã',!!clan,'Criação Guiada','Clã Gojo, Inumaki, Kamo ou Zenin.'); add('herdadoClanTraining','Herdado: resolver Treinamentos de Clã',herdadoClanTrainingResolved(c),'Criação Guiada','Escolha 2 perícias treinadas do clã ou 1 perícia especialista/mestre.'); }
   add('originBonus','Resolver bônus da Origem',originBonusResolved(c),'Criação Guiada','Cada Origem tem sua própria regra de bônus; distribua conforme o texto da Origem.');
   add('spec','Escolher Especialização',!!c.specializationId,'Criação Guiada');
   add('cd','Escolher atributo de CD',!!c.cdAttribute,'Criação Guiada');
@@ -761,5 +831,158 @@ LevelUp = function LevelUp({c,dispatch}){
   const [to,setTo]=useState(Math.min(20,Number(c.level||1)+1)); const tasks=levelTasks(c,Number(to)); const attrGainBetween=Array.from({length:Math.max(0,Number(to)-Number(c.level||1))},(_,i)=>Number(c.level||1)+i+1).filter(l=>l%4===0).length*2;
   return <section className="grid gap"><Panel title="Level Up Guiado"><div className="grid3"><Stat label="Nível atual" value={c.level}/><Field label="Novo nível"><input type="number" min={Number(c.level||1)+1} max="20" value={to} onChange={e=>setTo(e.target.value)}/></Field><button className="gold" onClick={()=>dispatch({type:'patch',patch:{level:Number(to),levelHistory:[{id:uid(),from:c.level,to:Number(to),at:new Date().toISOString(),tasks},...c.levelHistory]}})}>Aplicar Level Up</button></div>{attrGainBetween>0&&<div className="notice warnNotice"><b>Este avanço libera +{attrGainBetween} pontos de atributo.</b> Após aplicar, distribua abaixo.</div>}<div className="taskList">{tasks.map((t,i)=><div key={i} className="bad"><AlertTriangle/><span>{t}</span></div>)}</div><h3>Histórico</h3>{c.levelHistory.map(h=><details key={h.id}><summary>Nível {h.from} → {h.to}</summary>{h.tasks.map(t=><p key={t}>{t}</p>)}</details>)}</Panel><AttributeIncreaseManager c={c} dispatch={dispatch}/></section>
 }
+
+
+// =====================================================
+// v5.3 — revisão completa das Origens: regras, escolhas e efeitos de core
+// =====================================================
+const ORIGIN = {
+  INATO:'inato', HERDADO:'herdado', DERIVADO:'derivado', RESTRINGIDO:'restringido',
+  FETO:'feto_amaldiçoado_híbrido', SEM_TECNICA:'sem_técnica', MUTANTE:'corpo_amaldiçoado_mutante'
+};
+const PHYSICAL_ATTRS = ['strength','dexterity','constitution'];
+const ANATOMY_FEATURES = [
+  {id:'alma_maldita', name:'Alma Maldita', text:'Alma Maldita. Sua alma é impregnada com energia amaldiçoada, assumindo um aspecto maldito e difícil de se alterar. Quando uma criatura for causar dano na sua alma, esse dano é reduzido à metade antes do teste de Integridade; a partir do nível 15, ele é anulado. Essa habilidade funciona 2 vezes por dia, 3 no nível 6, 4 no nível 12 e 5 no nível 18.'},
+  {id:'anatomia_incompreensivel', name:'Anatomia Incompreensível', text:'Anatomia Incompreensível. O seu corpo tem uma forma que é difícil de compreender. Você tem 25% de chance (resultado “1” em 1d4) de ignorar o dano adicional de um ataque crítico ou um ataque furtivo. No nível 15, se torna 50% (resultado “1 ou 2” em 1d4).'},
+  {id:'arma_natural', name:'Arma Natural', text:'Arma Natural. Com uma fisionomia estranha, você possui garras, dentes afiados, cauda ou outro apêndice corporal próprio para ataques. Você recebe um ataque natural que causa 1d8 de dano Cortante, Perfurante ou de Impacto com os traços: Fineza e Enérgica. Esta arma natural conta como um ataque desarmado e se beneficia de efeitos que afetariam ataques desarmados. Caso seu dano desarmado seja superior ao da arma natural, ao invés disso aumente o seu dano desarmado em 1 nível.'},
+  {id:'articulacoes_extensas', name:'Articulações Extensas', text:'Articulações Extensas. Suas juntas são mais longas, ou suas garras são estendidas, aumentando a distância com que pode atacar. O alcance dos seus ataques corpo a corpo aumenta em 1,5 metros.'},
+  {id:'bracos_extras', name:'Braços Extras', text:'Braços Extras. Seu corpo possui um par de braços adicionais. Você recebe +2 em testes de prestidigitação e, se tiver pelo menos duas mãos livres, aplica esse bônus em testes de atletismo. E recebe um par adicional de mãos, permitindo você equipar dois equipamentos de uma mão ou um equipamento de duas mãos adicional, assim como agarrar duas criaturas e outros benefícios à discrição do Narrador.'},
+  {id:'capacidade_voo', name:'Capacidade de Voo', text:'Capacidade de Voo. No seu corpo repousa uma capacidade de voo, que com um estímulo de energia se torna ativa. Como uma ação livre, você pode gastar 1 ponto de energia para transformar seu Deslocamento de Caminhada em Deslocamento de Voo por uma rodada.'},
+  {id:'carapaca_mutante', name:'Carapaça Mutante', text:'Carapaça Mutante. Uma carapaça cobre o seu corpo, sendo uma mutação bizarra, mas resistente. Você recebe redução de dano contra danos físicos igual ao seu bônus de treinamento; no nível 10, você recebe resistência a um tipo de dano físico à sua escolha. Depois de feita essa escolha não pode ser mudada.'},
+  {id:'corpo_especializado', name:'Corpo Especializado', text:'Corpo Especializado. Seu corpo se desenvolve de maneira a possuir um foco. Escolha uma perícia: você recebe um bônus de 1d4 nela.'},
+  {id:'desenvolvimento_exagerado', name:'Desenvolvimento Exagerado', text:'Desenvolvimento Exagerado. Seu corpo se desenvolve de maneira exagerada, ultrapassando o formato e o porte padrão. Você aumenta sua categoria de tamanho em 1 e recebe 1 ponto de vida adicional por nível.'},
+  {id:'devorador_energia', name:'Devorador de Energia', text:'Devorador de Energia. Sendo envolvido com a própria energia, você pode a devorar quando resiste a uma habilidade originada dela. Quando passar em um teste de resistência para resistir a um Feitiço, você recebe 1 ponto de energia temporário cumulativo.'},
+  {id:'instinto_sanguinario', name:'Instinto Sanguinário', text:'Instinto Sanguinário. Em sua essência há um instinto por sangue e violência. Você adiciona o seu bônus de treinamento na sua Iniciativa; enquanto em uma cena de combate, você também adiciona seu bônus de treinamento na sua Atenção.'},
+  {id:'olhos_sombrios', name:'Olhos Sombrios', text:'Olhos Sombrios. Seus olhos guardam escuridão, sendo sombrios por natureza e aguçados. Você recebe Visão no Escuro (p.297). Além disso, você se torna treinado em Percepção e recebe um bônus de +2 em rolagens com a perícia. No 12º nível você passa a ignorar completamente efeitos de escuridão Leve e Total.'},
+  {id:'pernas_extras', name:'Pernas Extras', text:'Pernas Extras. No seu corpo cresce um par de pernas extras. Seu deslocamento aumenta em 4,5 metros e você passa a ignorar terreno difícil que esteja no solo.'},
+  {id:'presenca_nefasta', name:'Presença Nefasta', text:'Presença Nefasta. Com um semblante vil, a sua própria presença é nefasta. Toda criatura hostil, ao vê-lo pela primeira vez, deve realizar um teste de resistência de Vontade contra sua CD Amaldiçoada. Em uma falha, ela fica amedrontada por uma rodada. Em um sucesso, ela consegue lidar parcialmente com a sua presença, ficando abalada por uma rodada.'},
+  {id:'sangue_toxico', name:'Sangue Tóxico', text:'Sangue Tóxico. O seu sangue é tóxico, capaz de corroer o que entra em contato com. Sempre que sofrer dano de um ataque corpo a corpo, o atacante perde vida igual ao seu modificador de Constituição.'}
+];
+function semTecnicaId(id){ return id===ORIGIN.SEM_TECNICA || normText(id)==='sem_tecnica'; }
+function fetoId(id){ return id===ORIGIN.FETO || normText(id)==='feto_amaldicoado_hibrido'; }
+function mutanteId(id){ return id===ORIGIN.MUTANTE || normText(id)==='corpo_amaldicoado_mutante'; }
+function selectedAnatomies(c){ return Array.isArray(c.choices?.anatomyFeatures)?c.choices.anatomyFeatures:[]; }
+function anatomyEntitlement(c){ return fetoId(c.originId) ? 1 + Math.floor(Number(c.level||1)/5) : 0; }
+function hasAnatomy(c,id){ return selectedAnatomies(c).includes(id); }
+function originAuraAptitudes(){ return (rules.aptitudes||[]).filter(a=>aptitudeCategory(a)==='Aura'); }
+function semTecnicaBonusEntitlement(c){ const lvl=Number(c.level||1); const entries=[]; if(lvl>=3) entries.push({level:3, skillBonus:1, skillCount:2, attackOrResBonus:1}); if(lvl>=13) entries.push({level:13, skillBonus:2, skillCount:2, attackOrResBonus:1}); if(lvl>=17) entries.push({level:17, skillBonus:3, skillCount:2, attackOrResBonus:2}); return entries; }
+function semTecnicaExtraClassFeatureLimit(c){ const lvl=Number(c.level||1); return (lvl>=6?1:0)+(lvl>=15?1:0)+(lvl>=19?1:0); }
+function semTecnicaChoiceTalentAptLimit(c){ const lvl=Number(c.level||1); return 1+(lvl>=10?1:0); }
+function originFixedSkills(c){ const out=[]; if(c.originId===ORIGIN.HERDADO) out.push(...herdadoClanTrainedSkills(c)); if(semTecnicaId(c.originId)) out.push(...(c.choices?.semTecnicaSkills||[])); if(fetoId(c.originId) && hasAnatomy(c,'olhos_sombrios')) out.push('percepcao'); if(hasTalentByName(c,'Tempestade De Ideias') && c.choices?.tempestadeSkill) out.push(c.choices.tempestadeSkill); return [...new Set(out)].filter(Boolean); }
+function originMasterSkills(c){ const out=[]; if(c.originId===ORIGIN.HERDADO) out.push(...herdadoClanMasterSkills(c)); return [...new Set(out)].filter(Boolean); }
+originBonusConfig = function originBonusConfig(c){
+  const id=c.originId;
+  if(id===ORIGIN.INATO || id===ORIGIN.DERIVADO || fetoId(id)) return {mode:'split', text:'+2 em um atributo e +1 em outro atributo.'};
+  if(id===ORIGIN.HERDADO) return {mode:'herdado', text:'Bônus, perícias e herança definidos pelo clã escolhido.'};
+  if(id===ORIGIN.RESTRINGIDO) return {mode:'pool', title:'Restringido', pool:2, maxPer:2, allowed:PHYSICAL_ATTRS, fixed:{strength:1,dexterity:1,constitution:1}, text:'+1 em Força, Destreza e Constituição. Além disso, distribua 2 pontos entre atributos físicos.'};
+  if(semTecnicaId(id)) return {mode:'pool', title:'Sem Técnica', pool:4, maxPer:3, allowed:ATTRS.map(a=>a[0]), fixed:{}, text:'Distribua 4 pontos entre seus atributos, máximo de 3 pontos no mesmo atributo.'};
+  if(mutanteId(id)) return {mode:'pool', title:'Corpo Amaldiçoado Mutante', pool:2, maxPer:2, allowed:ATTRS.map(a=>a[0]), fixed:{}, text:'Distribua 2 pontos adicionais entre seus atributos.'};
+  return {mode:'none'};
+};
+originBonusValue = function originBonusValue(c,k){
+  const cfg=originBonusConfig(c); let v=Number(cfg.fixed?.[k]||0);
+  if(cfg.mode==='split'){
+    const b2=c.choices?.originBonuses?.b2 ?? c.choices?.originBonuses?.plus2;
+    const b1=c.choices?.originBonuses?.b1 ?? c.choices?.originBonuses?.plus1;
+    if(b2===k) v+=2; if(b1===k) v+=1;
+  } else if(cfg.mode==='herdado'){
+    const clan=herdadoClan(c); if(clan){
+      if(clan.id==='zenin'){
+        if(c.choices?.originBonuses?.b2===k) v+=2; if(c.choices?.originBonuses?.b1===k) v+=1;
+      } else {
+        const main=c.choices?.herdadoClanBonusMain; if(main===k) v+=2; else if(clan.attrs.includes(k)) v+=1;
+      }
+    }
+  } else if(cfg.mode==='pool') v += Number(originBonusAllocation(c)[k]||0);
+  return v;
+};
+originBonusResolved = function originBonusResolved(c){
+  const cfg=originBonusConfig(c); if(cfg.mode==='none') return false;
+  if(cfg.mode==='split'){
+    const b2=c.choices?.originBonuses?.b2 ?? c.choices?.originBonuses?.plus2;
+    const b1=c.choices?.originBonuses?.b1 ?? c.choices?.originBonuses?.plus1;
+    return !!b2 && !!b1 && b2!==b1;
+  }
+  if(cfg.mode==='herdado'){
+    const clan=herdadoClan(c); if(!clan) return false;
+    if(clan.id==='zenin') return !!c.choices?.originBonuses?.b2 && !!c.choices?.originBonuses?.b1 && c.choices.originBonuses.b2!==c.choices.originBonuses.b1;
+    return !!c.choices?.herdadoClanBonusMain && clan.attrs.includes(c.choices.herdadoClanBonusMain);
+  }
+  if(cfg.mode==='pool'){
+    const entries=Object.entries(originBonusAllocation(c));
+    return originBonusSpent(c)===cfg.pool && entries.every(([k,v])=>cfg.allowed.includes(k) && Number(v)>=0 && Number(v)<=cfg.maxPer);
+  }
+  return false;
+};
+selectedTrainedSkills = function selectedTrainedSkills(c){ return [...new Set([...(c.choices.skills||[]), ...originFixedSkills(c)])]; };
+selectedMasterSkills = function selectedMasterSkills(c){ return [...new Set([...(c.choices.masterSkills||[]), ...originMasterSkills(c)])]; };
+selectedSkillCount = function selectedSkillCount(c){ return (c.choices.skills||[]).length; };
+masterSkillLimit = function masterSkillLimit(c){ let n=0; if(Number(c.level||1)>=10) n+=1; if(hasTalentByName(c,'Tempestade De Ideias')) n+=1; return n; };
+talentLimit = function talentLimit(c){
+  let n=0; if(c.originId===ORIGIN.INATO) n+=1; if(semTecnicaId(c.originId)) n+=semTecnicaChoiceTalentAptLimit(c); return n;
+};
+aptitudeLimit = function aptitudeLimit(c){
+  if(c.isRestricted || c.originId===ORIGIN.RESTRINGIDO) return 0;
+  let n=Math.max(0, Number(c.level||1)-1);
+  if(c.originId===ORIGIN.DERIVADO) n+=1;
+  if(semTecnicaId(c.originId)) n+=semTecnicaChoiceTalentAptLimit(c);
+  if(semTecnicaId(c.originId) && Number(c.level||1)>=4) n+=1;
+  return n;
+};
+function originExtraHp(c){
+  let hp=0; if(c.originId===ORIGIN.HERDADO) hp+=herdadoExtraHp(c); if(fetoId(c.originId)&&hasAnatomy(c,'desenvolvimento_exagerado')) hp+=Number(c.level||1); return hp;
+}
+function originExtraPe(c){ return c.originId===ORIGIN.HERDADO ? herdadoExtraEnergy(c) : 0; }
+function originMovementBonus(c){ let m=0; if(c.originId===ORIGIN.RESTRINGIDO) m+=3; if(fetoId(c.originId)&&hasAnatomy(c,'pernas_extras')) m+=4.5; return m; }
+function originInitiativeBonus(c){ return fetoId(c.originId)&&hasAnatomy(c,'instinto_sanguinario') ? trainingBonus(c.level) : 0; }
+function originAttentionBonus(c){ return fetoId(c.originId)&&hasAnatomy(c,'instinto_sanguinario') ? trainingBonus(c.level) : 0; }
+skillBonus = function skillBonus(c,s){ const av=finalAttr(c,s.attribute); const trained=selectedTrainedSkills(c).includes(s.id); const master=selectedMasterSkills(c).includes(s.id); const tb=trainingBonus(c.level); let extra=0; if(fetoId(c.originId)&&hasAnatomy(c,'olhos_sombrios')&&s.id==='percepcao') extra+=2; if(fetoId(c.originId)&&hasAnatomy(c,'bracos_extras')&&s.id==='prestidigitacao') extra+=2; if(fetoId(c.originId)&&hasAnatomy(c,'corpo_especializado')&&c.choices?.corpoEspecializadoSkill===s.id) extra+=2; return mod(av)+(master?tb*2:(trained?tb:0))+extra; };
+calc = function calc(c){
+  const lvl=Number(c.level)||1, tb=trainingBonus(lvl), con=mod(finalAttr(c,'constitution')), dex=mod(finalAttr(c,'dexterity'));
+  const sp=specialization(c); const uniform=c.inventory.items.find(i=>i.type==='uniform'&&i.equipped); const shield=c.inventory.items.find(i=>i.type==='shield'&&i.equipped);
+  const uniformDef=uniform?.defenseBonus||0; const shieldRd=shield?.rd||0;
+  const hpBase=sp?.hpBase||10, hpPer=sp?.hpPerLevel||5, pePer=sp?.energyPerLevel||0;
+  const hpMax=Math.max(1,hpBase+con+(lvl-1)*(hpPer+Math.max(0,con)) + accessoryBonus(c,'hp') + originExtraHp(c));
+  const peMax=(c.isRestricted||c.originId===ORIGIN.RESTRINGIDO)?0:Math.max(0,pePer*lvl + accessoryBonus(c,'pe') + originExtraPe(c));
+  const movement=9 + accessoryBonus(c,'movement') + originMovementBonus(c);
+  const defense=10+dex+Math.floor(lvl/2)+uniformDef+accessoryBonus(c,'defense');
+  const skillMap=Object.fromEntries(rules.skills.map(s=>[s.id, skillBonus(c,s)]));
+  const attention=10+(skillMap.percepcao||0)+accessoryBonus(c,'attention')+originAttentionBonus(c);
+  return {level:lvl,tb,hpMax,peMax,soulMax:hpMax,movement,defense,attention,initiative:dex+accessoryBonus(c,'initiative')+originInitiativeBonus(c),rd:shieldRd, skillMap};
+};
+function InatoOriginPanel({c,dispatch}){ return <div className="choiceBlock"><h3>Origem Inato</h3><OriginBonusPanelBase c={c} dispatch={dispatch}/><div className="notice"><b>Talento Natural:</b> libera 1 talento no 1º nível. A partir do 4º nível, uma única vez, pode escolher receber um talento adicional ao subir de nível.</div><Field label="Marca Registrada — Feitiço adicional com custo -1 PE"><input value={c.choices?.marcaRegistradaSpell||''} onChange={e=>dispatch({type:'choice',key:'marcaRegistradaSpell',value:e.target.value})} placeholder="Nome do feitiço registrado"/></Field></div>; }
+function DerivadoOriginPanel({c,dispatch}){ const aura=originAuraAptitudes(); return <div className="choiceBlock"><h3>Origem Derivado</h3><OriginBonusPanelBase c={c} dispatch={dispatch}/><Field label="Aptidão Amaldiçoada de Aura concedida pela origem"><Select value={c.choices?.derivadoAuraAptitude||''} onChange={v=>dispatch({type:'choice',key:'derivadoAuraAptitude',value:v})}><option value="">Escolha</option>{aura.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</Select></Field><Field label="Desenvolvimento Inesperado — atributo foco"><Select value={c.choices?.[DERIVADO_LIMIT_ATTR_KEY]||''} onChange={v=>dispatch({type:'choice',key:DERIVADO_LIMIT_ATTR_KEY,value:v})}><option value="">Escolha</option>{ATTRS.map(([k,l])=><option key={k} value={k}>{l}</option>)}</Select></Field><div className="notice"><b>Energia Antinatural:</b> 1 vez por dia, como Ação Bônus em combate, recupera PE igual ao dobro do bônus de treinamento: {trainingBonus(c.level)*2} PE.</div></div>; }
+function RestringidoOriginPanel({c,dispatch}){ return <div className="choiceBlock"><h3>Origem Restringido</h3><OriginBonusPanelBase c={c} dispatch={dispatch}/><div className="notice"><b>Físico Abençoado:</b> +3m de deslocamento, imunidade a doenças mundanas, vantagem contra venenos e acesso obrigatório à especialização Restringido.</div><div className="notice"><b>Ápice Corporal Humano:</b> FOR, DES e CON têm limite 30. A cada 6 níveis, escolha um desses atributos para +2.</div><AttributeLimitControls c={c} dispatch={dispatch}/><div className="notice"><b>Resiliência Imediata:</b> {trainingBonus(c.level)} uso(s) por descanso longo; reduz dano em {Math.max(1,Math.floor(Number(c.level||1)/2))*5} ou evita desmembramento.</div></div>; }
+function FetoOriginPanel({c,dispatch}){ const sel=selectedAnatomies(c), max=anatomyEntitlement(c); return <div className="choiceBlock"><h3>Origem Feto Amaldiçoado Híbrido</h3><OriginBonusPanelBase c={c} dispatch={dispatch}/><div className="notice"><b>Herança Maldita:</b> cura recebida por energia reversa é reduzida pela metade. Se obtiver habilidade de cura de energia reversa, pode usar tratando energia reversa como energia amaldiçoada e gastando 2 PE.</div><LimitedChoiceGrid title={`Características de Anatomia (${sel.length}/${max})`} items={ANATOMY_FEATURES.map(a=>({id:a.id,name:a.name,originalText:a.text}))} selected={sel} limit={max} onChange={arr=>dispatch({type:'choice',key:'anatomyFeatures',value:arr.slice(0,max)})}/>{hasAnatomy(c,'corpo_especializado')&&<Field label="Corpo Especializado — escolha a perícia"><Select value={c.choices?.corpoEspecializadoSkill||''} onChange={v=>dispatch({type:'choice',key:'corpoEspecializadoSkill',value:v})}><option value="">Escolha</option>{trainableSkills().map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>}<div className="notice"><b>Vigor Maldito:</b> {1+(Number(c.level)>=4?1:0)+(Number(c.level)>=8?1:0)+(Number(c.level)>=12?1:0)} uso(s) por descanso longo; cura base {5+(Number(c.level)>=4?5:0)+(Number(c.level)>=8?5:0)+(Number(c.level)>=12?5:0)} + mod. Constituição por uso gasto.</div></div>; }
+function SemTecnicaOriginPanel({c,dispatch}){ const chosen=c.choices?.semTecnicaSkills||[]; const freeChoiceLimit=semTecnicaChoiceTalentAptLimit(c); return <div className="choiceBlock"><h3>Origem Sem Técnica</h3><OriginBonusPanelBase c={c} dispatch={dispatch}/><LimitedChoiceGrid title={`Estudos Dedicados — perícias treinadas (${chosen.length}/2)`} items={trainableSkills().map(s=>({...s,originalText:SKILL_HELP[s.id]}))} selected={chosen} limit={2} onChange={arr=>dispatch({type:'choice',key:'semTecnicaSkills',value:arr.slice(0,2)})}/><div className="notice"><b>Restrição:</b> não possui técnica nem acesso a Feitiços e não pode ter a especialização Especialista em Técnicas.</div><div className="notice"><b>Empenho Implacável:</b> escolhas de talento/aptidão por origem disponíveis: {freeChoiceLimit}. Habilidades de especialização adicionais por origem: {semTecnicaExtraClassFeatureLimit(c)}.</div>{Number(c.level)>=4&&<div className="notice"><b>Novo Estilo da Sombra:</b> adicione ao Perfil Amaldiçoado como equivalente à técnica e receba Domínio Simples. Técnicas de Estilo: {1+[8,12,16,20].filter(l=>Number(c.level)>=l).length}.</div>}</div>; }
+function MutanteOriginPanel({c,dispatch}){ const cores=c.choices?.mutantCores||['Núcleo 1','Núcleo 2','Núcleo 3']; return <div className="choiceBlock"><h3>Origem Corpo Amaldiçoado Mutante</h3><OriginBonusPanelBase c={c} dispatch={dispatch}/><div className="notice"><b>Forma de Vida Sintética:</b> imune a dano venenoso e à condição envenenado; não recebe efeitos de refeições nem de itens do tipo Medicina.</div><div className="notice"><b>Mutação Abrupta:</b> inicia com três núcleos. Alternar núcleo ativo em combate é Ação Bônus.</div><div className="grid3">{[0,1,2].map(i=><Field key={i} label={`Núcleo ${i+1}`}><input value={cores[i]||''} onChange={e=>{ const next=[...cores]; next[i]=e.target.value; dispatch({type:'choice',key:'mutantCores',value:next}); }}/></Field>)}</div><Field label="Núcleo Primário"><Select value={c.choices?.mutantPrimaryCore||''} onChange={v=>dispatch({type:'choice',key:'mutantPrimaryCore',value:v})}><option value="">Escolha</option>{cores.map((x,i)=><option key={i} value={x||`Núcleo ${i+1}`}>{x||`Núcleo ${i+1}`}</option>)}</Select></Field></div>; }
+function OriginBonusPanelBase({c,dispatch}){ const cfg=originBonusConfig(c); if(cfg.mode==='split'){ return <div><p className="muted">{cfg.text}</p><div className="grid2"><Field label="+2 em atributo"><Select value={c.choices.originBonuses?.b2||''} onChange={v=>dispatch({type:'choiceObject',key:'originBonuses',id:'b2',value:v})}><option value="">—</option>{ATTRS.map(([k,l])=><option key={k} value={k} disabled={c.choices.originBonuses?.b1===k}>{l}</option>)}</Select></Field><Field label="+1 em atributo"><Select value={c.choices.originBonuses?.b1||''} onChange={v=>dispatch({type:'choiceObject',key:'originBonuses',id:'b1',value:v})}><option value="">—</option>{ATTRS.map(([k,l])=><option key={k} value={k} disabled={c.choices.originBonuses?.b2===k}>{l}</option>)}</Select></Field></div></div>; } const alloc=originBonusAllocation(c), spent=originBonusSpent(c), remaining=Math.max(0,cfg.pool-spent); return <div><p className="muted">{cfg.text}</p>{Object.keys(cfg.fixed||{}).length>0&&<div className="notice">Bônus fixos: {Object.entries(cfg.fixed).map(([k,v])=>`${ATTR_LABEL[k]} +${v}`).join(', ')}</div>}<div className={remaining>0?'notice warnNotice':'notice'}><b>Distribuição:</b> {spent}/{cfg.pool}. Restantes: {remaining}.</div><div className="attrIncreaseGrid">{ATTRS.filter(([k])=>cfg.allowed.includes(k)).map(([k,l])=>{ const current=Number(alloc[k]||0); const canAdd=spent<cfg.pool && current<cfg.maxPer; return <div key={k} className="attrIncCard"><b>{l}</b><strong>+{current}</strong><div className="row"><button disabled={current<=0} onClick={()=>dispatch({type:'choiceObject',key:'originBonusAlloc',id:k,value:Math.max(0,current-1)})}>−</button><button disabled={!canAdd} onClick={()=>dispatch({type:'choiceObject',key:'originBonusAlloc',id:k,value:current+1})}>+</button></div></div>})}</div></div>; }
+OriginBonusPanel = function OriginBonusPanel({c,dispatch}){
+  if(!c.originId) return <div className="notice">Escolha uma origem para liberar os bônus corretos.</div>;
+  if(c.originId===ORIGIN.INATO) return <InatoOriginPanel c={c} dispatch={dispatch}/>;
+  if(c.originId===ORIGIN.HERDADO) return <HerdadoOriginPanel c={c} dispatch={dispatch}/>;
+  if(c.originId===ORIGIN.DERIVADO) return <DerivadoOriginPanel c={c} dispatch={dispatch}/>;
+  if(c.originId===ORIGIN.RESTRINGIDO) return <RestringidoOriginPanel c={c} dispatch={dispatch}/>;
+  if(fetoId(c.originId)) return <FetoOriginPanel c={c} dispatch={dispatch}/>;
+  if(semTecnicaId(c.originId)) return <SemTecnicaOriginPanel c={c} dispatch={dispatch}/>;
+  if(mutanteId(c.originId)) return <MutanteOriginPanel c={c} dispatch={dispatch}/>;
+  return <OriginBonusPanelBase c={c} dispatch={dispatch}/>;
+};
+validation = function validation(c){
+  const tasks=[]; const add=(id,label,ok,tab,reason)=>tasks.push({id,label,ok,tab,reason}); const cfg=specTrainingConfig(c);
+  const skillAllowed=trainableSkills().map(s=>s.id).filter(id=>!cfg.skillForbidden.includes(id)); const invalidSkills=(c.choices.skills||[]).filter(id=>!skillAllowed.includes(id)); const invalidRes=(c.choices.resistances||[]).filter(id=>!cfg.resAllowed.includes(id));
+  const skillMax=skillLimit(c), resMax=resistanceLimit(c), talentMax=talentLimit(c), aptMax=aptitudeLimit(c), aptLvlMax=aptitudeLevelPointLimit(c); const sCount=selectedSkillCount(c); const baseChosen=baseSkillChosenCount(c,cfg); const masterMax=masterSkillLimit(c); const invalidMasters=(c.choices.masterSkills||[]).filter(id=>!selectedTrainedSkills(c).includes(id)); const invalidAptitudes=(c.choices.aptitudes||[]).map(id=>rules.aptitudes.find(a=>a.id===id)).filter(Boolean).filter(a=>!aptitudeRequirementStatus(c,a).ok); const unmastered=c.inventory.items.filter(i=>i.equipped && ((i.type==='weapon'&&!hasWeaponMastery(c,i))||(i.type==='shield'&&!hasShieldMastery(c,i)))); const over=attributeOvercapProblems(c);
+  add('rolls','Rolar atributos 4d6 descartando o menor',!!latestRollSet(c),'Criação Guiada','Atributos começam vazios.'); add('assign','Distribuir os 6 resultados rolados',ATTRS.every(([k])=>c.attributes.assigned[k]),'Criação Guiada','Cada atributo deve receber um resultado.'); add('attrCap','Respeitar limite de atributo 20',over.length===0,'Criação Guiada',over.length?`Sem mecânica suficiente para: ${over.map(x=>`${x.label} bruto ${x.raw}, limite ${x.cap}`).join('; ')}.`:'Mecânicas reconhecidas aplicadas.');
+  add('origin','Escolher Origem',!!c.originId,'Criação Guiada'); add('originBonus','Resolver bônus da Origem',originBonusResolved(c),'Criação Guiada','Cada Origem tem sua própria regra de bônus.');
+  if(c.originId===ORIGIN.HERDADO){ const clan=herdadoClan(c); add('herdadoClan','Herdado: escolher clã',!!clan,'Criação Guiada','Clã Gojo, Inumaki, Kamo ou Zenin.'); add('herdadoClanTraining','Herdado: resolver Treinamentos de Clã',herdadoClanTrainingResolved(c),'Criação Guiada','Escolha 2 perícias treinadas do clã ou 1 perícia especialista/mestre.'); }
+  if(c.originId===ORIGIN.DERIVADO){ add('derivedAura','Derivado: escolher Aptidão Amaldiçoada de Aura',!!c.choices?.derivadoAuraAptitude,'Criação Guiada','Energia Antinatural concede uma aptidão de Aura respeitando requisitos.'); add('derivedLimitAttr','Derivado: escolher atributo de Desenvolvimento Inesperado',!!c.choices?.[DERIVADO_LIMIT_ATTR_KEY],'Criação Guiada','Esse atributo recebe +1 e +1 limite a cada 4 níveis.'); }
+  if(c.originId===ORIGIN.RESTRINGIDO){ add('restrictedSpec','Restringido: usar especialização Restringido',c.specializationId==='restringido','Criação Guiada','Restringido é preso à especialização de mesmo nome.'); add('restrictedApex','Restringido: Ápice Corporal conforme nível',getSelectedArrayChoice(c,'restringidoApexAttrs').length<=Math.floor(Number(c.level||1)/6),'Criação Guiada','Escolha até 1 atributo físico a cada 6 níveis.'); }
+  if(fetoId(c.originId)){ add('fetoAnatomy',`Feto Híbrido: Características de Anatomia (${selectedAnatomies(c).length}/${anatomyEntitlement(c)})`,selectedAnatomies(c).length===anatomyEntitlement(c),'Criação Guiada','Recebe 1 no nível 1 e +1 a cada 5 níveis.'); if(hasAnatomy(c,'corpo_especializado')) add('fetoCorpoEspecializado','Corpo Especializado: escolher perícia',!!c.choices?.corpoEspecializadoSkill,'Criação Guiada'); }
+  if(semTecnicaId(c.originId)){ add('semTechSpec','Sem Técnica: não pode escolher Especialista em Técnicas',c.specializationId!=='especialista_tecnica','Criação Guiada','Sem Técnica não possui técnica nem acesso a Feitiços.'); add('semTechSkills',`Sem Técnica: Estudos Dedicados (${(c.choices?.semTecnicaSkills||[]).length}/2)`,(c.choices?.semTecnicaSkills||[]).length===2,'Criação Guiada','Escolha 2 perícias treinadas pela origem.'); }
+  if(mutanteId(c.originId)){ add('mutantCore','Mutante: escolher Núcleo Primário',!!c.choices?.mutantPrimaryCore,'Criação Guiada','Começa com três núcleos e escolhe um como primário.'); }
+  add('spec','Escolher Especialização',!!c.specializationId,'Criação Guiada'); add('cd','Escolher atributo de CD',!!c.cdAttribute,'Criação Guiada'); add('res',`Escolher resistências permitidas (${(c.choices.resistances||[]).length}/${resMax})`,(c.choices.resistances||[]).length===resMax && invalidRes.length===0,'Criação Guiada', invalidRes.length?`Inválidas: ${invalidRes.map(resistanceName).join(', ')}`:cfg.notes); add('skills',`Escolher perícias treinadas da especialização (${sCount}/${skillMax})`,sCount===skillMax && invalidSkills.length===0 && baseChosen>=cfg.skillBaseNeed,'Criação Guiada', invalidSkills.length?`Inválidas: ${invalidSkills.map(skillName).join(', ')}`:`Grupo obrigatório: ${baseChosen}/${cfg.skillBaseNeed}. Perícias de origem não gastam esse limite.`);
+  add('masterSkill',`Perícia mestre (${(c.choices.masterSkills||[]).length}/${masterMax})`,masterMax===0 || ((c.choices.masterSkills||[]).length===masterMax && invalidMasters.length===0),'Criação Guiada','Escolha perícias treinadas para se tornarem Mestre quando o nível/talento liberar.'); if((c.choices.skills||[]).includes('oficio')) add('oficio-detail','Informar os Ofícios treinados.',selectedOffices(c).length>=1,'Criação Guiada','Selecione os ofícios disponíveis.'); add('talents',`Talentos dentro do limite (${(c.choices.talents||[]).length}/${talentMax})`,(c.choices.talents||[]).length<=talentMax,'Perfil Mundano','Talentos ficam bloqueados quando o limite é atingido.'); add('equip1','Escolher 2 equipamentos iniciais de custo 1 pagos/gratuitos de escolha',(c.inventory.items.filter(i=>Number(i.cost)===1&&!i.freeStarter).length)>=2,'Registro e Inventário','Itens gratuitos da especialização/uniforme inicial não contam neste limite.'); add('uniform','Equipar uniforme comum/inicial',c.inventory.items.some(i=>i.type==='uniform'),'Registro e Inventário'); add('kit','Escolher 1 kit de ferramentas',c.inventory.items.some(i=>i.type==='kit'),'Registro e Inventário'); add('masteryWarn','Usar apenas equipamentos com maestria',unmastered.length===0,'Registro e Inventário',unmastered.length?`Sem maestria: ${unmastered.map(i=>i.name).join(', ')}`:cfg.masteryText); add('tech','Escolher/cadastrar Técnica ou origem sem técnica/restrita',c.isRestricted || c.originId===ORIGIN.RESTRINGIDO || semTecnicaId(c.originId) || c.technique.name || c.technique.id,'Perfil Amaldiçoado'); add('apt',`Aptidões escolhidas (${(c.choices.aptitudes||[]).length}/${aptMax})`,c.isRestricted || ((c.choices.aptitudes||[]).length<=aptMax && invalidAptitudes.length===0),'Perfil Amaldiçoado', invalidAptitudes.length?`Aptidões sem pré-requisito: ${invalidAptitudes.map(a=>a.name).join(', ')}`:'Limite considera origem.'); add('aptLevels',`Níveis de Aptidão distribuídos (${aptitudeLevelTotal(c)}/${aptLvlMax})`,c.isRestricted || aptitudeLevelTotal(c)<=aptLvlMax,'Perfil Amaldiçoado','Em todo nível par, aumenta 1 nível de aptidão; níveis 10 e 20 adicionam +1.'); return tasks;
+};
+levelTasks = function levelTasks(c,to){ const tasks=[]; const sp=specialization(c); const gains=parseLevelTableFromText(sp?.originalText||''); for(let lvl=Number(c.level||1)+1; lvl<=to; lvl++){ tasks.push(`Nível ${lvl}: adicionar 1 dado de vida da especialização e recalcular PV máximo.`); tasks.push(`Nível ${lvl}: recalcular PE/Estamina, Defesa, Atenção, limites de perícia, talentos e aptidões.`); if(!(c.isRestricted||c.originId===ORIGIN.RESTRINGIDO)) tasks.push(`Nível ${lvl}: receber 1 Aptidão Amaldiçoada, respeitando pré-requisitos.`); if(lvl%4===0) tasks.push(`Nível ${lvl}: distribuir +2 pontos de atributo.`); if([5,9,13,17].includes(lvl)) tasks.push(`Nível ${lvl}: bônus de treinamento aumenta para ${trainingBonus(lvl)}.`); if(lvl===10) tasks.push('Nível 10: escolher 1 perícia treinada para se tornar Mestre.'); if(gains[lvl]) tasks.push(`${sp?.name||'Especialização'}, tabela de nível ${lvl}: ${gains[lvl]}.`); if(c.originId===ORIGIN.DERIVADO && lvl%4===0) tasks.push(`Derivado, nível ${lvl}: Desenvolvimento Inesperado concede +1 ponto e +1 limite no atributo escolhido.`); if(c.originId===ORIGIN.RESTRINGIDO && lvl%6===0) tasks.push(`Restringido, nível ${lvl}: Ápice Corporal concede +2 em Força, Destreza ou Constituição.`); if(fetoId(c.originId) && lvl%5===0) tasks.push(`Feto Amaldiçoado Híbrido, nível ${lvl}: recebe outra Característica de Anatomia.`); if(semTecnicaId(c.originId)){ if([3,13,17].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: aplicar bônus de Empenho Implacável em 2 perícias e em jogada de ataque ou TR.`); if([6,15,19].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: recebe habilidade de especialização adicional.`); if([1,10].includes(lvl)) tasks.push(`Sem Técnica, nível ${lvl}: recebe talento ou aptidão amaldiçoada à escolha.`); if(lvl===4) tasks.push('Sem Técnica, nível 4: recebe Novo Estilo da Sombra e Domínio Simples.'); if([8,12,16,20].includes(lvl)) tasks.push(`Novo Estilo da Sombra, nível ${lvl}: recebe técnica de estilo adicional.`); } if(c.originId===ORIGIN.HERDADO){ if(c.choices?.herdadoClan==='gojo' && lvl%2===0) tasks.push(`Clã Gojo, nível ${lvl}: +1 PE máximo adicional.`); if(c.choices?.herdadoClan==='kamo') tasks.push(`Clã Kamo, nível ${lvl}: +1 PV máximo adicional.`); if(['gojo','zenin'].includes(c.choices?.herdadoClan) && [5,10,15,20].includes(lvl)) tasks.push(`Clã ${herdadoClan(c)?.name||''}, nível ${lvl}: escolha adicional ligada a feitiço/foco do clã.`); } } tasks.push('Focos/Bônus de Interlúdio não são ganho automático de nível; o mestre/admin deve conceder manualmente.'); return [...new Set(tasks)]; };
 
 createRoot(document.getElementById('root')).render(<App/>);
