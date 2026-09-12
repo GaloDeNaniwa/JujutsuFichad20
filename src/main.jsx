@@ -844,7 +844,8 @@ function SpecializationSkillPicker({c,dispatch,cfg,skillPool,skillMax}){
   const baseCandidates=skillPool.filter(s=>baseIds.has(s.id));
   const freeCandidates=skillPool.filter(s=>!baseIds.has(s.id) && !fixedIds.has(s.id) && !groupOptionIds.has(s.id));
   const baseChosen=baseSkillChosenCount(c,cfg);
-  const totalChosen=selectedSkillCount(c);
+  const freeMax=cfg.skillAnyNeed+extraSkillSlots(c);
+  const freeChosen=selected.filter(id=>freeCandidates.some(s=>s.id===id)).length;
   const onChange=arr=>dispatch({type:'choice',key:'skills',value:clampSelection(arr,skillPool.map(s=>s.id),skillMax)});
   return <div className="skillPickerBlock">
     {cfg.skillFixed.length>0 && <div className="notice good"><b>Perícias fixas da especialização:</b> {cfg.skillFixed.map(id=>skillName(id)).join(', ')} — sempre treinadas de graça, não gastam o limite de perícias livres nem o grupo obrigatório abaixo.</div>}
@@ -858,7 +859,7 @@ function SpecializationSkillPicker({c,dispatch,cfg,skillPool,skillMax}){
       <LimitedChoiceGrid title={`Escolha ${g.count} entre ${g.options.map(skillName).join(' ou ')}`} items={candidates.map(s=>({...s, originalText:(SKILL_HELP[s.id]?SKILL_HELP[s.id]+' ':'')+'Escolha obrigatória desta especialização.'}))} selected={selected} limit={skillMax} onChange={onChange}/>
     </div>; })}
     <ExtraSkillAttributePicker c={c} dispatch={dispatch}/>
-    <div className="notice"><b>Perícias livres: {totalChosen}/{skillMax}</b><span> — qualquer perícia treinável, além das {cfg.skillBaseNeed} do grupo obrigatório{groups.length>0?` e das escolhas obrigatórias`:''}{cfg.skillFixed.length>0?` e das ${cfg.skillFixed.length} fixas`:''}.</span></div>
+    <div className="notice"><b>Perícias livres: {freeChosen}/{freeMax}</b><span> — qualquer perícia treinável, além das {cfg.skillBaseNeed} do grupo obrigatório{groups.length>0?` e das escolhas obrigatórias`:''}{cfg.skillFixed.length>0?` e das ${cfg.skillFixed.length} fixas`:''}. ({cfg.skillAnyNeed} da especialização + {extraSkillSlots(c)} por atributo.)</span></div>
     <LimitedChoiceGrid title="Outras perícias treináveis" items={freeCandidates.map(s=>({...s, originalText:SKILL_HELP[s.id]}))} selected={selected} limit={skillMax} onChange={onChange}/>
   </div>;
 }
