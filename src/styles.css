@@ -71,3 +71,10 @@ ul{line-height:1.5}.feature small{line-height:1.35}.miniPanel p.muted{margin-top
 .attrIncCard .row{display:flex;gap:8px}.attrIncCard button{min-width:42px}.warnNotice{border-color:#d39b28;background:rgba(247,196,83,.12)}
 .compactAttrs{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.officeSelector{margin-top:14px}
 tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
+
+/* v9 — resumo mecânico (bônus + gameplay) no lugar do texto de lore */
+.mechSummary .bonusList{list-style:none;margin:6px 0 12px;padding:0;display:grid;gap:8px}
+.mechSummary .bonusList li{position:relative;padding:8px 12px 8px 30px;border:1px solid rgba(247,196,83,.25);border-radius:10px;background:rgba(0,0,0,.22);line-height:1.4}
+.mechSummary .bonusList li::before{content:'+';position:absolute;left:10px;top:7px;color:var(--gold);font-weight:900}
+.mechSummary .playstyleNote{border:1px solid rgba(140,255,189,.3);background:rgba(140,255,189,.06);border-radius:10px;padding:10px 12px;color:var(--text)}
+.mechSummary .playstyleNote b{color:var(--ok)}
