@@ -143,6 +143,7 @@ function reducer(state, action){
     case 'choice': return withChar(c=>({...c, choices:{...c.choices, [action.key]:action.value}}));
     case 'setExtraSkillMasterCount': return withChar(c=>reclampSkillsAfter({...c, choices:{...c.choices, extraSkillMasterCount:action.value}}));
     case 'setExtraSkillAttribute': return withChar(c=>reclampSkillsAfter({...c, choices:{...c.choices, extraSkillAttribute:action.value}}));
+    case 'setHpGain': return withChar(c=>({...c, hpGains:{...(c.hpGains||{}), [action.level]:{mode:action.mode, value:action.value}}}));
     case 'choiceObject': return withChar(c=>({...c, choices:{...c.choices, [action.key]:{...(c.choices[action.key]||{}), [action.id]:action.value}}}));
     case 'skillDetail': return withChar(c=>({...c, choices:{...c.choices, skillDetails:{...(c.choices.skillDetails||{}), [action.skillId]:action.value}}}));
     case 'adminInterludeFocus': return withChar(c=>({...c, choices:{...c.choices, interludeFocus:Math.max(0,Number(action.value)||0)}}));
@@ -663,7 +664,29 @@ function featureCardsFromSpec(sp){
 }
 function FeatureCard({title,text}){ const [open,setOpen]=useState(false); const formatted=formatRuleText(text||''); return <div className="feature readable"><h3>{title}</h3><div className="textPreview">{formatted.slice(0,700)}{formatted.length>700?'...':''}</div><button onClick={()=>setOpen(true)}>Consultar texto completo</button>{open&&<ModalText title={title} text={formatted} onClose={()=>setOpen(false)}/>}</div> }
 
-function WeaponCard({item,dispatch,compact,character}){ const [open,setOpen]=useState(false); const isShield=item.type==='shield'; const isUniform=item.type==='uniform'; const canGrade=item.type==='weapon'||item.type==='uniform'||item.type==='shield'; const warn=character && item.equipped && ((item.type==='weapon'&&!hasWeaponMastery(character,item))||(item.type==='shield'&&!hasShieldMastery(character,item))); const propsText=Array.isArray(item.properties)?item.properties.join(', '):(item.properties||''); const edit=(field,value)=>dispatch({type:'updateItemField',instanceId:item.instanceId,field,value}); return <div className={`equipCard sheetCard ${warn?'invalid':''}`}><div className="equipTitle"><b>{item.name}</b><span>{item.freeStarter?'Grátis':item.type}</span></div>{warn&&<div className="bad small"><AlertTriangle size={14}/> Sem maestria pela especialização atual.</div>}<div className="equipGrid"><span>Grau Am.</span>{canGrade&&dispatch?<select value={item.grade||'—'} onChange={e=>edit('grade',e.target.value)}><option value="—">—</option>{['4º Grau','3º Grau','2º Grau','1º Grau','Grau Especial'].map(g=><option key={g} value={g}>{g}</option>)}</select>:<b>{item.grade||'-'}</b>}<span>{isUniform?'Defesa':isShield?'Dano/RD':'Dano'}</span><b>{isUniform?item.defenseBonus:isShield?`${item.damage||'-'} / RD ${item.rd||0}`:item.damage}</b><span>Grupo/Tipo</span><b>{item.group||item.category||item.kind||'-'}</b><span>Crítico/Ônus</span><b>{item.critical||item.penalty||'-'}</b><span>Alcance</span><b>{item.range||item.kind||'-'}</b><span>Custo/Espaço</span><b>C{item.cost??0} / E{item.spaces??0}</b></div>{!compact&&<><h4>Características / Propriedades</h4>{dispatch?<textarea className="equipEditField" rows={2} value={propsText} placeholder="Propriedades da arma/item..." onChange={e=>edit('properties',e.target.value)}/>:<p>{propsText||item.originalText?.slice(0,220)||'—'}</p>}<h4>Habilidade Especial</h4>{dispatch?<textarea className="equipEditField" rows={2} value={item.specialText||''} placeholder="Habilidade especial ganha ao evoluir de grau..." onChange={e=>edit('specialText',e.target.value)}/>:<p>{item.specialText||'—'}</p>}<h4>Característica Especial / Encantamentos</h4>{dispatch?<textarea className="equipEditField" rows={2} value={item.customNotes||''} placeholder="Encantamentos, gravações, características especiais..." onChange={e=>edit('customNotes',e.target.value)}/>:<p>{item.customNotes||'—'}</p>}<div className="row"><button onClick={()=>dispatch({type:'equipItem',instanceId:item.instanceId,singleType:isUniform?'uniform':null})}>{item.equipped?'Desequipar':'Equipar'}</button><button className="danger" onClick={()=>dispatch({type:'removeItem',instanceId:item.instanceId})}><Trash2 size={16}/>Remover</button><button onClick={()=>setOpen(true)}>Ver descrição</button></div></>}{open&&<ModalText title={item.name} text={formatRuleText(item.originalText||'Sem descrição cadastrada.')} onClose={()=>setOpen(false)}/>}</div> }
+function WeaponCard({item,dispatch,compact,character}){
+  const [open,setOpen]=useState(false);
+  const isShield=item.type==='shield'; const isUniform=item.type==='uniform';
+  const canUpgrade=item.type==='weapon'||item.type==='uniform'||item.type==='shield';
+  const warn=character && item.equipped && ((item.type==='weapon'&&!hasWeaponMastery(character,item))||(item.type==='shield'&&!hasShieldMastery(character,item)));
+  const propsText=Array.isArray(item.properties)?item.properties.join(', '):(item.properties||'');
+  const edit=(field,value)=>dispatch({type:'updateItemField',instanceId:item.instanceId,field,value});
+  const hasExtra=propsText||item.specialText||item.customNotes;
+  return <div className={`equipCard sheetCard ${warn?'invalid':''}`}>
+    <div className="equipTitle"><b>{item.name}</b><span>{item.freeStarter?'Grátis':item.type}</span></div>
+    {warn&&<div className="bad small"><AlertTriangle size={14}/> Sem maestria pela especialização atual.</div>}
+    <div className="equipGrid"><span>Grau Am.</span>{canUpgrade&&dispatch?<select value={item.grade||'—'} onChange={e=>edit('grade',e.target.value)}><option value="—">—</option>{['4º Grau','3º Grau','2º Grau','1º Grau','Grau Especial'].map(g=><option key={g} value={g}>{g}</option>)}</select>:<b>{item.grade||'-'}</b>}<span>{isUniform?'Defesa':isShield?'Dano/RD':'Dano'}</span><b>{isUniform?item.defenseBonus:isShield?`${item.damage||'-'} / RD ${item.rd||0}`:item.damage}</b><span>Grupo/Tipo</span><b>{item.group||item.category||item.kind||'-'}</b><span>Crítico/Ônus</span><b>{item.critical||item.penalty||'-'}</b><span>Alcance</span><b>{item.range||item.kind||'-'}</b><span>Custo/Espaço</span><b>C{item.cost??0} / E{item.spaces??0}</b></div>
+    {!compact && <>
+      {canUpgrade && dispatch ? <details className="equipCharDetails"><summary>Características / evolução de grau{hasExtra?'':' (vazio)'}</summary>
+        <span className="miniLabel">Propriedades</span><textarea className="equipEditField" rows={2} value={propsText} placeholder="Propriedades da arma/item..." onChange={e=>edit('properties',e.target.value)}/>
+        <span className="miniLabel">Habilidade Especial</span><textarea className="equipEditField" rows={2} value={item.specialText||''} placeholder="Habilidade especial ganha ao evoluir de grau..." onChange={e=>edit('specialText',e.target.value)}/>
+        <span className="miniLabel">Encantamentos / Característica Especial</span><textarea className="equipEditField" rows={2} value={item.customNotes||''} placeholder="Encantamentos, gravações, características especiais..." onChange={e=>edit('customNotes',e.target.value)}/>
+      </details> : (hasExtra && <p className="muted small">{propsText||item.specialText||item.customNotes}</p>)}
+      <div className="row"><button onClick={()=>dispatch({type:'equipItem',instanceId:item.instanceId,singleType:isUniform?'uniform':null})}>{item.equipped?'Desequipar':'Equipar'}</button><button className="danger" onClick={()=>dispatch({type:'removeItem',instanceId:item.instanceId})}><Trash2 size={16}/>Remover</button><button onClick={()=>setOpen(true)}>Ver descrição</button></div>
+    </>}
+    {open&&<ModalText title={item.name} text={formatRuleText(item.originalText||'Sem descrição cadastrada.')} onClose={()=>setOpen(false)}/>}
+  </div>;
+}
 const EQUIP_TYPE_LABELS = {weapon:'Armas', uniform:'Uniformes', shield:'Escudos', kit:'Kits', special:'Itens Especiais / Acessórios'};
 function EquipmentTypeGroup({type,items,dispatch,character}){
   const [open,setOpen]=useState(true);
@@ -989,9 +1012,32 @@ function Mundane({c,dispatch}){
     <LevelUpPoolAudit c={c}/>
     <Panel title={`Habilidades de Classe por nível: ${selectedFeatures.length}/${featureLimit}`}><p className="muted">Habilidades escolhíveis agrupadas por nível mínimo. Texto extraído do livro, sem resumo.</p><div className="notice"><b>Disponíveis no seu nível:</b> {totalPossible}. <b>Limite atual:</b> {featureLimit} ({pool.base-pool.talentsFromShared} do pool compartilhado{pool.featureBonus>0?` + ${pool.featureBonus} de bônus de origem`:''}).</div><div className="levelAbilityList">{split.choicesByLevel.length?split.choicesByLevel.map(group=><ClassLevelGroup key={group.level} group={group} c={c} selected={selectedFeatures} limit={featureLimit} dispatch={dispatch}/>):<p>Nenhuma habilidade de classe detectada para esta especialização.</p>}</div>{split.tables.length>0&&<details className="collapseBox"><summary>Tabelas e desbloqueios detectados</summary><div className="classAutoGrid">{split.tables.map(f=><ClassFeatureReadOnly key={f.id} feature={f}/>)}</div></details>}</Panel>
     <TalentMechanicsPanel c={c} dispatch={dispatch}/><Panel title={`Talentos e escolhas de level up: ${selectedTalents.length}/${tMax}`}><p className="muted">Talentos competem com habilidades de classe quando o level up permite escolher entre um ou outro. Use “?” para consultar texto e requisitos.</p><div className="notice"><b>Limite atual:</b> {tMax} ({pool.base-pool.featuresSelected} do pool compartilhado + {pool.originBonus} exclusivos de Origem, que não competem com Habilidades de Classe).</div>{escolhidoId(c.originId)&&<div className="notice"><b>Talentos exclusivos de O Escolhido (homebrew) liberados abaixo.</b> O Grande Lorde e O Grande Duque são mutuamente exclusivos; Ancestral de Nascien exige nível 8.</div>}<LimitedChoiceGrid title="Talentos disponíveis" items={talentsPool(c)} selected={selectedTalents} limit={tMax} requirementCheck={t=>escolhidoTalentRequirementStatus(c,t)} onChange={arr=>dispatch({type:'choice',key:'talents',value:clampSelection(arr,talentsPool(c).map(t=>t.id),tMax)})}/></Panel></section> }
+function HpGainManager({c,dispatch}){
+  const sp=specialization(c); const sr=currentSpecRuleV54(c);
+  const hitDie=sr.hitDie||sp?.hitDie||'d8'; const dieMax=hpDieMax(hitDie);
+  const fixedValue=sr.hpPerLevel||sp?.hpPerLevel||5;
+  const level=Number(c.level||1);
+  if(level<2) return null;
+  const levels=Array.from({length:level-1},(_,i)=>i+2);
+  return <Panel title={`Pontos de Vida por nível (dado ${hitDie})`} help={`A cada nível a partir do 2º, escolha como ganhar PV: Mínimo (sempre 1), Fixo (${fixedValue}, valor do livro) ou Rolar (role o dado ${hitDie} no Discord e digite o resultado, de 1 a ${dieMax}, para evitar rolagens não conferíveis).`}>
+    <div className="hpGainGrid">
+      {levels.map(lvl=>{
+        const g=c.hpGains?.[lvl]||{mode:'fixed'};
+        const set=(mode,value)=>dispatch({type:'setHpGain',level:lvl,mode,value});
+        return <div key={lvl} className="hpGainRow">
+          <b>Nível {lvl}</b>
+          <label><input type="radio" name={`hpgain-${lvl}`} checked={g.mode==='min'} onChange={()=>set('min',1)}/> Mínimo (1)</label>
+          <label><input type="radio" name={`hpgain-${lvl}`} checked={!g.mode||g.mode==='fixed'} onChange={()=>set('fixed',fixedValue)}/> Fixo ({fixedValue})</label>
+          <label><input type="radio" name={`hpgain-${lvl}`} checked={g.mode==='roll'} onChange={()=>set('roll',g.mode==='roll'?g.value:1)}/> Rolar (Discord)</label>
+          {g.mode==='roll' && <input className="hpGainRollInput" type="number" min="1" max={dieMax} value={g.value||1} onChange={e=>set('roll',Math.max(1,Math.min(dieMax,Number(e.target.value)||1)))}/>}
+        </div>;
+      })}
+    </div>
+  </Panel>;
+}
 function LevelUp({c,dispatch}){
   const [to,setTo]=useState(Math.min(20,Number(c.level||1)+1)); const tasks=levelTasks(c,Number(to)); const attrGainBetween=Array.from({length:Math.max(0,Number(to)-Number(c.level||1))},(_,i)=>Number(c.level||1)+i+1).filter(l=>l%4===0).length*2;
-  return <section className="grid gap"><Panel title="Level Up Guiado"><div className="grid3"><Stat label="Nível atual" value={c.level}/><Field label="Novo nível"><input type="number" min={Number(c.level||1)+1} max="20" value={to} onChange={e=>setTo(e.target.value)}/></Field><button className="gold" onClick={()=>dispatch({type:'patch',patch:{level:Number(to),levelHistory:[{id:uid(),from:c.level,to:Number(to),at:new Date().toISOString(),tasks},...c.levelHistory]}})}>Aplicar Level Up</button></div>{attrGainBetween>0&&<div className="notice warnNotice"><b>Este avanço libera +{attrGainBetween} pontos de atributo.</b> Após aplicar, distribua abaixo.</div>}<div className="taskList">{tasks.map((t,i)=><div key={i} className="bad"><AlertTriangle/><span>{t}</span></div>)}</div><h3>Histórico</h3>{c.levelHistory.map(h=><details key={h.id}><summary>Nível {h.from} → {h.to}</summary>{h.tasks.map(t=><p key={t}>{t}</p>)}</details>)}</Panel><AttributeIncreaseManager c={c} dispatch={dispatch}/></section>
+  return <section className="grid gap"><Panel title="Level Up Guiado"><div className="grid3"><Stat label="Nível atual" value={c.level}/><Field label="Novo nível"><input type="number" min={Number(c.level||1)+1} max="20" value={to} onChange={e=>setTo(e.target.value)}/></Field><button className="gold" onClick={()=>dispatch({type:'patch',patch:{level:Number(to),levelHistory:[{id:uid(),from:c.level,to:Number(to),at:new Date().toISOString(),tasks},...c.levelHistory]}})}>Aplicar Level Up</button></div>{attrGainBetween>0&&<div className="notice warnNotice"><b>Este avanço libera +{attrGainBetween} pontos de atributo.</b> Após aplicar, distribua abaixo.</div>}<div className="taskList">{tasks.map((t,i)=><div key={i} className="bad"><AlertTriangle/><span>{t}</span></div>)}</div><h3>Histórico</h3>{c.levelHistory.map(h=><details key={h.id}><summary>Nível {h.from} → {h.to}</summary>{h.tasks.map(t=><p key={t}>{t}</p>)}</details>)}</Panel><HpGainManager c={c} dispatch={dispatch}/><AttributeIncreaseManager c={c} dispatch={dispatch}/></section>
 }
 
 
@@ -1343,11 +1389,20 @@ function reclampSkillsAfter(c){
 }
 function resistanceLimit(c){ return specTrainingConfig(c).resMax; };
 function specializationEnergyBonusV54(c){ const sr=currentSpecRuleV54(c); if(!sr.energyAddsAttribute) return 0; const k=c.energyAttribute||c.cdAttribute||sr.cdAttributes?.[0]; return Math.max(0, mod(finalAttr(c,k))); }
+function hpDieMax(hitDie){ const m=String(hitDie||'d8').match(/d(\d+)/i); return m?Number(m[1]):8; }
+function hpGainForLevel(c,level,hpPer,dieMax){
+  const g=c.hpGains?.[level];
+  if(g?.mode==='min') return 1;
+  if(g?.mode==='roll') return Math.max(1, Math.min(dieMax, Number(g.value)||1));
+  return hpPer;
+}
 function calc(c){
   const lvl=Number(c.level)||1, con=mod(finalAttr(c,'constitution')), dex=mod(finalAttr(c,'dexterity'));
   const sp=specialization(c); const sr=currentSpecRuleV54(c); const uniform=c.inventory.items.find(i=>i.type==='uniform'&&i.equipped); const shield=c.inventory.items.find(i=>i.type==='shield'&&i.equipped);
   const hpBase=sr.hpBase||sp?.hpBase||10, hpPer=sr.hpPerLevel||sp?.hpPerLevel||5, pePer=sr.energyPerLevel??sp?.energyPerLevel??0;
-  const hpMax=Math.max(1,hpBase+con+(lvl-1)*(hpPer+Math.max(0,con)) + accessoryBonus(c,'hp') + originExtraHp(c) + restringidoHpGiftBonus(c));
+  const hitDie=sr.hitDie||sp?.hitDie||'d8', dieMax=hpDieMax(hitDie);
+  let hpDiceSum=0; for(let l=2;l<=lvl;l++) hpDiceSum += hpGainForLevel(c,l,hpPer,dieMax) + Math.max(0,con);
+  const hpMax=Math.max(1,hpBase+con+hpDiceSum + accessoryBonus(c,'hp') + originExtraHp(c) + restringidoHpGiftBonus(c));
   const peMax=(sr.stamina||c.isRestricted||c.originId===ORIGIN.RESTRINGIDO)?0:Math.max(0,pePer*lvl + specializationEnergyBonusV54(c) + accessoryBonus(c,'pe') + originExtraPe(c));
   const staminaMax=restringidoStaminaMax(c);
   const movement=9 + accessoryBonus(c,'movement') + originMovementBonus(c);

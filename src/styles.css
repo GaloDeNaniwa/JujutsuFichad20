@@ -99,6 +99,12 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .pill.mutedPill{color:var(--muted,#9a8f78);border-color:var(--line);font-weight:600}
 @media(max-width:520px){.classChoiceGrid,.choiceCardGrid{grid-template-columns:1fr}}
 
+/* v10 — escolha de PV por nível (mínimo/fixo/rolar) */
+.hpGainGrid{display:grid;gap:8px;margin-top:8px}
+.hpGainRow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#0a0908}
+.hpGainRow label{display:flex;align-items:center;gap:5px;font-weight:600;color:var(--text)}
+.hpGainRollInput{width:70px}
+
 /* v10 — auditoria do pool de escolhas de nível (classe vs talento vs origem) */
 .poolAuditGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
 .poolAuditItem{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;background:#0a0908}
@@ -112,7 +118,11 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .equipTypeGroup:first-of-type{margin-top:10px}
 .equipTypeHead{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;color:var(--gold);border-bottom:1px solid rgba(247,196,83,.25);padding-bottom:6px}
 .equipTypeHead small{color:var(--muted,#9a8f78);font-weight:400}
-.equipEditField{width:100%;resize:vertical;min-height:44px;font:inherit;background:#0a0908;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.equipEditField{width:100%;resize:vertical;min-height:44px;font:inherit;background:#0a0908;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:8px}
+.equipCharDetails{margin:10px 0;border:1px solid rgba(247,196,83,.25);border-radius:10px;padding:8px 10px;background:#0a0907}
+.equipCharDetails summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:.9rem}
+.equipCharDetails .miniLabel{display:block;font-size:.78rem;color:var(--muted,#9a8f78);margin:8px 0 4px;font-weight:700}
+.equipTypeGroup .equipmentCards{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 
 /* v10 — toast de confirmação (ex.: item adicionado) */
 .toastWrap{position:fixed;left:0;right:0;bottom:24px;z-index:50;display:flex;justify-content:center;pointer-events:none}
