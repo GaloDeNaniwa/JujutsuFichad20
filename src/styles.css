@@ -85,4 +85,11 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .weaponCategoryBlock p.small{margin:0 0 8px;font-size:.82rem;line-height:1.45}
 .catalogPick.unmastered button{border-color:#7b2222;background:rgba(123,34,34,.12);color:#ffd8d8}
 .catalogPick.unmastered button svg{margin-right:4px;vertical-align:-2px;color:#ff8f8f}
+
+/* v10 — administração de créditos */
+.creditModal{max-width:460px}
+.creditAdmin h3{margin:12px 0 4px}
+.creditAdmin h3:first-child{margin-top:0}
+.creditAdmin hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+.creditAdmin .grid2{margin-bottom:8px}
 .mechSummary .playstyleNote b{color:var(--ok)}

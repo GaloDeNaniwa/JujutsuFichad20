@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useReducer, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import { Save, Upload, Download, RotateCcw, Search, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, Swords, HeartPulse, Zap, Shield, BookOpen, Eye, Coins, ChevronDown, ChevronUp } from 'lucide-react';
 import rules from './data/rules.json';
 import './styles.css';
@@ -13,6 +14,8 @@ const RESISTANCES = [['astucia','Astúcia','INT'], ['fortitude','Fortitude','CON
 const TABS = ['Ficha/Combate','Criação Guiada','Valores','Registro e Inventário','Perfil Mundano','Perfil Amaldiçoado','Perfil Restrito','Bônus de Interlúdio','Invocações','Técnicas','Level Up','Compêndio','Admin'];
 const STORAGE_KEY = 'fm_app_full_state_v1';
 const CREDIT_STORAGE_KEY = 'fm_app_credit_guard_v1';
+const CREDIT_PASSWORD_DEFAULT = '2655';
+const CREDIT_MASTER_PASSWORD = '265511';
 const ATTRIBUTE_HELP = {strength:'Força mede potência física: ataques e manobras corporais, Atletismo, dano/controle físico quando a habilidade usa FOR.',dexterity:'Destreza mede agilidade, reflexos e precisão: Defesa, Iniciativa, Acrobacia, Furtividade e ataques/ações ágeis quando aplicável.',constitution:'Constituição mede resistência corporal: PV, Fortitude, fôlego, tolerância a dano, venenos e esforço prolongado.',intelligence:'Inteligência mede estudo, técnica e raciocínio: investigação, ofícios, ocultismo, medicina e algumas CDs/recursos de especialização.',wisdom:'Sabedoria mede percepção, intuição e leitura do ambiente: Atenção, Percepção, Intuição e algumas CDs/recursos.',presence:'Presença mede força de personalidade e imposição: Persuasão, Intimidação, Enganação, Performance e técnicas sociais.'};
 const RESISTANCE_HELP = {astucia:'Astúcia é usada contra efeitos que exigem raciocínio, leitura, truques mentais ou reação intelectual.',fortitude:'Fortitude é usada contra efeitos físicos, venenos, dor, exaustão e resistência corporal.',integrity:'Integridade protege a estabilidade interna, alma, corpo e efeitos que atacam sua essência.',reflexes:'Reflexos é usado para evitar explosões, armadilhas, ataques em área e ameaças que dependem de reação rápida.',will:'Vontade é usada contra medo, compulsão, domínio mental, pressão espiritual e efeitos que desafiam determinação.'};
 const SKILL_HELP = {acrobacia:'Acrobacia cobre equilíbrio, cambalhotas, quedas, saltos precisos, escapar de posições ruins e movimentos corporais complexos.',atletismo:'Atletismo cobre correr, saltar, nadar, escalar, empurrar, puxar, agarrar e feitos de força física.',direcao:'Direção cobre conduzir veículos, montarias ou movimentação controlada em deslocamento arriscado.',enganacao:'Enganação cobre mentir, blefar, disfarçar intenções e manipular informações falsas.',feiticaria:'Feitiçaria cobre conhecimento e execução de energia amaldiçoada, feitiços, técnicas e fenômenos jujutsu.',furtividade:'Furtividade cobre se esconder, se mover sem ser notado e agir silenciosamente.',historia:'História cobre conhecimento histórico, eventos, linhagens, organizações e registros relevantes.',intimidacao:'Intimidação cobre ameaçar, pressionar e impor presença para obter reação social.',intuicao:'Intuição cobre perceber intenção, mentira, emoção e riscos sutis.',investigacao:'Investigação cobre buscar pistas, interpretar detalhes e conectar evidências.',medicina:'Medicina cobre estabilizar, tratar ferimentos, diagnosticar condições e lidar com cuidados físicos.',ocultismo:'Ocultismo cobre conhecimento de maldições, rituais, barreiras, entidades e fenômenos sobrenaturais.',oficio:'Ofício exige especificar uma profissão/ferramenta. Ex.: Ferreiro, Alfaiate, Alquimia, Canalizador.',percepcao:'Percepção cobre notar ameaças, sons, movimento, detalhes visuais e emboscadas. Também alimenta Atenção.',performance:'Performance cobre atuação, música, presença pública e apresentação artística/social.',persuasao:'Persuasão cobre convencer, negociar, pedir ajuda e influenciar sem ameaça direta.',prestidigitacao:'Prestidigitação cobre truques manuais, esconder objetos, saques rápidos e manipulação fina.',sobrevivencia:'Sobrevivência cobre rastrear, se orientar, resistir em ambientes hostis e lidar com natureza.',tecnologia:'Tecnologia cobre operar, entender e consertar dispositivos modernos.',teologia:'Teologia cobre religiões, doutrinas, símbolos espirituais e tradição sagrada.'};
@@ -104,7 +107,7 @@ function normalizeCharacter(raw){
   return merged;
 }
 function initialState(){
-  const base={activeTab:'Criação Guiada', credits:5, firstFreeUsed:false, characters:[emptyCharacter()], activeCharacterId:null, ruleReview:{}, communityTechniques:[], adminLog:[]};
+  const base={activeTab:'Criação Guiada', credits:5, firstFreeUsed:false, creditPassword:CREDIT_PASSWORD_DEFAULT, characters:[emptyCharacter()], activeCharacterId:null, ruleReview:{}, communityTechniques:[], adminLog:[]};
   base.activeCharacterId=base.characters[0].id;
   try {
     const creditRaw = localStorage.getItem(CREDIT_STORAGE_KEY);
@@ -112,6 +115,7 @@ function initialState(){
       const creditState = JSON.parse(creditRaw);
       base.credits = Number.isFinite(Number(creditState.credits)) ? Number(creditState.credits) : 5;
       base.firstFreeUsed = !!creditState.firstFreeUsed;
+      base.creditPassword = typeof creditState.creditPassword==='string' && creditState.creditPassword ? creditState.creditPassword : CREDIT_PASSWORD_DEFAULT;
     }
     const raw=localStorage.getItem(STORAGE_KEY);
     if(!raw) return base;
@@ -119,7 +123,7 @@ function initialState(){
     if(!Array.isArray(parsed.characters) || !parsed.characters.length) return base;
     const characters = parsed.characters.map(normalizeCharacter);
     const activeCharacterId = characters.some(c=>c.id===parsed.activeCharacterId) ? parsed.activeCharacterId : characters[0].id;
-    return {...base, ...parsed, credits:base.credits, firstFreeUsed:base.firstFreeUsed, characters, activeCharacterId};
+    return {...base, ...parsed, credits:base.credits, firstFreeUsed:base.firstFreeUsed, creditPassword:base.creditPassword, characters, activeCharacterId};
   } catch(e){
     console.warn('Estado local inválido. Reiniciando ficha local.', e);
     try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
@@ -179,9 +183,21 @@ function reducer(state, action){
       const incoming = action.state || {};
       const characters = Array.isArray(incoming.characters) && incoming.characters.length ? incoming.characters.map(normalizeCharacter) : state.characters;
       const activeCharacterId = characters.some(c=>c.id===incoming.activeCharacterId) ? incoming.activeCharacterId : characters[0]?.id;
-      return {...state, ...incoming, characters, activeCharacterId, credits:state.credits, firstFreeUsed:state.firstFreeUsed};
+      return {...state, ...incoming, characters, activeCharacterId, credits:state.credits, firstFreeUsed:state.firstFreeUsed, creditPassword:state.creditPassword};
     }
-    case 'reset': localStorage.removeItem(STORAGE_KEY); return {...initialState(), credits:state.credits, firstFreeUsed:state.firstFreeUsed};
+    case 'reset': localStorage.removeItem(STORAGE_KEY); return {...initialState(), credits:state.credits, firstFreeUsed:state.firstFreeUsed, creditPassword:state.creditPassword};
+    case 'addCredits': {
+      if(String(action.password||'')!==String(state.creditPassword||CREDIT_PASSWORD_DEFAULT)) return {...state, adminLog:[...state.adminLog,{id:uid(),type:'erro',text:'Senha de créditos incorreta.',at:new Date().toISOString()}]};
+      const amount=Math.max(0,Math.floor(Number(action.amount)||0));
+      if(!amount) return state;
+      return {...state, credits:state.credits+amount, adminLog:[...state.adminLog,{id:uid(),type:'credito',text:`+${amount} crédito(s) adicionado(s) manualmente.`,at:new Date().toISOString()}]};
+    }
+    case 'changeCreditPassword': {
+      if(String(action.masterPassword||'')!==CREDIT_MASTER_PASSWORD) return {...state, adminLog:[...state.adminLog,{id:uid(),type:'erro',text:'Senha mestra incorreta.',at:new Date().toISOString()}]};
+      const newPassword=String(action.newPassword||'').trim();
+      if(!newPassword) return state;
+      return {...state, creditPassword:newPassword, adminLog:[...state.adminLog,{id:uid(),type:'credito',text:'Senha de créditos alterada.',at:new Date().toISOString()}]};
+    }
     default: return state;
   }
 }
@@ -312,11 +328,59 @@ function allCatalog(){ return [...rules.weapons,...rules.uniforms,...rules.shiel
 function parseSpecLevelGains(text=''){ const gains={}; String(text||'').split(/\n/).map(x=>x.trim()).forEach(line=>{ const m=line.match(/^(\d+)[º°]?\s+(.+)$/i); if(m){ const lvl=Number(m[1]); if(lvl>=1&&lvl<=20) gains[lvl]=m[2].trim(); }}); return gains; }
 
 function extractSpecUnlocks(text,lvl){ const out=[]; const patterns=[`No nível ${lvl}`,`No ${lvl}º nível`,`Nos níveis ${lvl}`]; for(const p of patterns){ const idx=String(text).indexOf(p); if(idx>=0) out.push(String(text).slice(idx,idx+180).replace(/\s+/g,' ').trim()); } return out.slice(0,3); }
-function usePersist(state){ useEffect(()=>{ const persist={...state}; delete persist.credits; delete persist.firstFreeUsed; localStorage.setItem(STORAGE_KEY, JSON.stringify(persist)); localStorage.setItem(CREDIT_STORAGE_KEY, JSON.stringify({credits:state.credits, firstFreeUsed:state.firstFreeUsed})); },[state]); }
+function usePersist(state){ useEffect(()=>{ const persist={...state}; delete persist.credits; delete persist.firstFreeUsed; delete persist.creditPassword; localStorage.setItem(STORAGE_KEY, JSON.stringify(persist)); localStorage.setItem(CREDIT_STORAGE_KEY, JSON.stringify({credits:state.credits, firstFreeUsed:state.firstFreeUsed, creditPassword:state.creditPassword})); },[state]); }
 function Tooltip({text}){ const [open,setOpen]=useState(false); return <span className="tip"><button onClick={()=>setOpen(!open)} className="q">?</button>{open&&<span className="tipbox">{text}</span>}</span>; }
 function ModalText({title,text,onClose}){ return <div className="modalOverlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modalHead"><h2>{title}</h2><button onClick={onClose}>Fechar</button></div><div className="modalText">{String(text||'').split(/\n{2,}|(?=•)/).filter(Boolean).map((p,i)=><p key={i}>{p.trim()}</p>)}</div></div></div>; }
+function CreditAdminButton({state,dispatch}){
+  const [open,setOpen]=useState(false);
+  const [pw,setPw]=useState('');
+  const [amount,setAmount]=useState(1);
+  const [masterPw,setMasterPw]=useState('');
+  const [newPw,setNewPw]=useState('');
+  const [msg,setMsg]=useState(null);
+  const close=()=>{ setOpen(false); setPw(''); setMasterPw(''); setNewPw(''); setMsg(null); };
+  const addCredits=()=>{
+    if(pw!==(state.creditPassword||CREDIT_PASSWORD_DEFAULT)){ setMsg({bad:true,text:'Senha incorreta.'}); return; }
+    const amt=Math.max(0,Math.floor(Number(amount)||0));
+    if(!amt){ setMsg({bad:true,text:'Informe uma quantidade válida.'}); return; }
+    dispatch({type:'addCredits',password:pw,amount:amt});
+    setMsg({bad:false,text:`+${amt} crédito(s) adicionado(s).`});
+    setPw('');
+  };
+  const changePassword=()=>{
+    if(masterPw!==CREDIT_MASTER_PASSWORD){ setMsg({bad:true,text:'Senha mestra incorreta.'}); return; }
+    if(!newPw.trim()){ setMsg({bad:true,text:'Informe a nova senha.'}); return; }
+    dispatch({type:'changeCreditPassword',masterPassword:masterPw,newPassword:newPw.trim()});
+    setMsg({bad:false,text:'Senha de créditos alterada.'});
+    setMasterPw(''); setNewPw('');
+  };
+  const modal=<div className="modalOverlay" onClick={close}><div className="modal creditModal" onClick={e=>e.stopPropagation()}>
+      <div className="modalHead"><h2>Administrar créditos</h2><button onClick={close}>Fechar</button></div>
+      <div className="modalText creditAdmin">
+        <h3>Adicionar créditos</h3>
+        <div className="grid2">
+          <Field label="Senha"><input type="password" value={pw} onChange={e=>setPw(e.target.value)}/></Field>
+          <Field label="Quantidade"><input type="number" min="1" value={amount} onChange={e=>setAmount(e.target.value)}/></Field>
+        </div>
+        <button onClick={addCredits}>Adicionar créditos</button>
+        <hr/>
+        <h3>Trocar senha de créditos</h3>
+        <p className="muted small">Requer a senha mestra (do dono). A nova senha passa a valer para adicionar créditos.</p>
+        <div className="grid2">
+          <Field label="Senha mestra"><input type="password" value={masterPw} onChange={e=>setMasterPw(e.target.value)}/></Field>
+          <Field label="Nova senha de créditos"><input value={newPw} onChange={e=>setNewPw(e.target.value)}/></Field>
+        </div>
+        <button onClick={changePassword}>Trocar senha</button>
+        {msg && <div className={msg.bad?'bad small':'notice good'}>{msg.text}</div>}
+      </div>
+    </div></div>;
+  return <>
+    <button className="q mini" title="Administrar créditos" onClick={()=>setOpen(true)}><Lock size={14}/></button>
+    {open && createPortal(modal, document.body)}
+  </>;
+}
 function App(){ const [state,dispatch]=useReducer(reducer,undefined,initialState); usePersist(state); const c=state.characters.find(x=>x.id===state.activeCharacterId)||state.characters[0]; const stats=calc(c); const tasks=validation(c); const pending=tasks.filter(t=>!t.ok); const [showMobile,setShowMobile]=useState(false);
-  return <div className="app"><header className="top"><div><h1>Feiticeiros & Maldições</h1><p>Ficha automatizada · criação guiada · compêndio interno · banco comunitário de técnicas</p></div><div className="topActions"><span className="pill"><Coins size={16}/> {state.credits} créditos</span><select value={c.id} onChange={e=>dispatch({type:'selectCharacter',id:e.target.value})}>{state.characters.map(ch=><option key={ch.id} value={ch.id}>{ch.name||'Personagem sem nome'}</option>)}</select><button onClick={()=>dispatch({type:'newCharacter'})}>Novo</button><button onClick={()=>downloadState(state)}>Exportar</button><label className="button">Importar<input type="file" hidden accept=".json" onChange={e=>importFile(e,dispatch)}/></label><button className="danger" onClick={()=>confirm('Resetar dados locais?')&&dispatch({type:'reset'})}>Reset local</button></div></header>
+  return <div className="app"><header className="top"><div><h1>Feiticeiros & Maldições</h1><p>Ficha automatizada · criação guiada · compêndio interno · banco comunitário de técnicas</p></div><div className="topActions"><span className="pill"><Coins size={16}/> {state.credits} créditos</span><CreditAdminButton state={state} dispatch={dispatch}/><select value={c.id} onChange={e=>dispatch({type:'selectCharacter',id:e.target.value})}>{state.characters.map(ch=><option key={ch.id} value={ch.id}>{ch.name||'Personagem sem nome'}</option>)}</select><button onClick={()=>dispatch({type:'newCharacter'})}>Novo</button><button onClick={()=>downloadState(state)}>Exportar</button><label className="button">Importar<input type="file" hidden accept=".json" onChange={e=>importFile(e,dispatch)}/></label><button className="danger" onClick={()=>confirm('Resetar dados locais?')&&dispatch({type:'reset'})}>Reset local</button></div></header>
   <nav className="tabs"><button className="hamb" onClick={()=>setShowMobile(!showMobile)}>{showMobile?'Ocultar abas':'Mostrar abas'}</button><div className={showMobile?'tabsInner open':'tabsInner'}>{TABS.map(t=><button key={t} className={state.activeTab===t?'active':''} onClick={()=>dispatch({type:'tab',tab:t})}>{t}{t==='Criação Guiada'&&pending.length?<b>{pending.length}</b>:null}</button>)}</div></nav>
   {pending.length>0 && <div className="pendingBar"><AlertTriangle size={18}/><b>Ficha com {pending.length} pendências.</b>{pending.slice(0,5).map(p=><span key={p.id}>{p.label}{p.tab&&<button onClick={()=>dispatch({type:'tab',tab:p.tab})}>Ir</button>}</span>)}</div>}
   <main>{state.activeTab==='Criação Guiada'&&<Creation c={c} state={state} dispatch={dispatch} tasks={tasks}/>} {state.activeTab==='Ficha/Combate'&&<CombatSheet c={c} dispatch={dispatch} stats={stats}/>} {state.activeTab==='Valores'&&<Values c={c} dispatch={dispatch} stats={stats}/>} {state.activeTab==='Registro e Inventário'&&<Inventory c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Mundano'&&<Mundane c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Amaldiçoado'&&<Cursed c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Restrito'&&<Restricted c={c} dispatch={dispatch}/>} {state.activeTab==='Bônus de Interlúdio'&&<Interlude c={c} dispatch={dispatch}/>} {state.activeTab==='Invocações'&&<Summons c={c} dispatch={dispatch}/>} {state.activeTab==='Técnicas'&&<TechniqueBank c={c} state={state} dispatch={dispatch}/>} {state.activeTab==='Level Up'&&<LevelUp c={c} dispatch={dispatch}/>} {state.activeTab==='Compêndio'&&<Compendium/>} {state.activeTab==='Admin'&&<Admin state={state}/>}</main></div> }
