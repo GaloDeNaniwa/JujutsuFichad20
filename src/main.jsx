@@ -472,7 +472,7 @@ function MechanicalSummary({title,summary,fallbackText}){
     {open && <ModalText title={title} text={formatRuleText(fallbackText||'')} onClose={()=>setOpen(false)}/>}
   </div>;
 }
-function Panel({title,children,help}){ return <section className="panel"><h2>{title}{help&&<Tooltip text={help}/>}</h2>{children}</section> }
+function Panel({title,children,help}){ const [open,setOpen]=useState(true); return <section className={open?'panel':'panel collapsed'}><h2 className="panelHead"><span className="panelToggle" onClick={()=>setOpen(o=>!o)}>{open?<ChevronUp size={18}/>:<ChevronDown size={18}/>}{title}</span>{help&&<Tooltip text={help}/>}</h2>{open&&<div className="panelBody">{children}</div>}</section> }
 function Stat({label,value,icon}){ return <div className="stat">{icon}<span>{label}</span><b>{value}</b></div> }
 
 function Resource({label,current,max,temp}){ return <div className="resource"><h3>{label}</h3><b>{current}/{max}</b><small>Temp. {temp||0}</small><div className="bar"><i style={{width:`${Math.max(0,Math.min(100,(max?current/max:0)*100))}%`}}/></div></div> }

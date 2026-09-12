@@ -86,6 +86,11 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .catalogPick.unmastered button{border-color:#7b2222;background:rgba(123,34,34,.12);color:#ffd8d8}
 .catalogPick.unmastered button svg{margin-right:4px;vertical-align:-2px;color:#ff8f8f}
 
+/* v10 — painéis retráteis em todas as guias */
+.panel h2.panelHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panelToggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.panel.collapsed h2.panelHead{margin-bottom:0}
+
 /* v10 — administração de créditos */
 .creditModal{max-width:460px}
 .creditAdmin h3{margin:12px 0 4px}
