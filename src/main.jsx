@@ -156,7 +156,8 @@ function reducer(state, action){
     }
     case 'assignAttr': return withChar(c=>({ ...c, attributes:{...c.attributes, assigned:{...c.attributes.assigned, [action.attr]: action.rollId}}, }));
     case 'originBonus': return withChar(c=>({ ...c, attributes:{...c.attributes, originBonuses:{...c.attributes.originBonuses, [action.attr]:action.value}}, choices:{...c.choices, originBonuses:{...c.choices.originBonuses, [action.bonusKey]:action.attr}} }));
-    case 'addItem': return {...withChar(c=>({...c, inventory:{...c.inventory, items:[...c.inventory.items,{...action.item, instanceId:uid(), qty:1, freeStarter:!!action.freeStarter, equipped: action.item.type==='uniform' && !c.inventory.items.some(i=>i.type==='uniform'&&i.equipped)}]}})), adminLog:[...state.adminLog,{id:uid(),type:'item',text:`${action.item.name} ${action.freeStarter?'adicionado como equipamento gratuito':'adicionado ao inventário'}.`,at:new Date().toISOString()}]};
+    case 'addItem': return {...withChar(c=>({...c, inventory:{...c.inventory, items:[...c.inventory.items,{...action.item, instanceId:uid(), qty:1, freeStarter:!!action.freeStarter, equipped: action.item.type==='uniform' && !c.inventory.items.some(i=>i.type==='uniform'&&i.equipped)}]}})), adminLog:[...state.adminLog,{id:uid(),type:'item',text:`${action.item.name} ${action.freeStarter?'adicionado como equipamento gratuito':'adicionado ao inventário'}.`,at:new Date().toISOString()}], toast:{id:uid(),kind:'good',text:`${action.item.name} adicionado ao inventário.`}};
+    case 'clearToast': return state.toast && state.toast.id===action.id ? {...state, toast:null} : state;
     case 'applyStarterEquipment': return applyStarterEquipment(state, currentId, withChar);
     case 'removeItem': return withChar(c=>({...c, inventory:{...c.inventory, items:c.inventory.items.filter(i=>i.instanceId!==action.instanceId)}}));
     case 'equipItem': return withChar(c=>({...c, inventory:{...c.inventory, items:c.inventory.items.map(i=> i.instanceId===action.instanceId ? {...i, equipped:!i.equipped} : (action.singleType && i.type===action.singleType ? {...i,equipped:false}:i))}}));
@@ -299,7 +300,9 @@ function trainableSkills(){ return rules.skills.filter(s=>s.id!=='iniciativa' &&
 function resistanceName(id){ return RESISTANCES.find(r=>r[0]===id)?.[1] || id; }
 function skillName(id){ return rules.skills.find(s=>s.id===id)?.name || id; }
 
-function extraSkillSlots(c){ return Math.max(0, Math.max(mod(finalAttr(c,'intelligence')), mod(finalAttr(c,'wisdom')))); }
+function extraSkillAttributeMod(c){ const attr=c.choices?.extraSkillAttribute; if(attr!=='intelligence' && attr!=='wisdom') return 0; return Math.max(0, mod(finalAttr(c,attr))); }
+function extraSkillMasterCount(c){ return Math.min(Math.max(0,Math.floor(Number(c.choices?.extraSkillMasterCount)||0)), extraSkillAttributeMod(c)); }
+function extraSkillSlots(c){ return extraSkillAttributeMod(c) - extraSkillMasterCount(c); }
 
 
 
@@ -328,7 +331,7 @@ function allCatalog(){ return [...rules.weapons,...rules.uniforms,...rules.shiel
 function parseSpecLevelGains(text=''){ const gains={}; String(text||'').split(/\n/).map(x=>x.trim()).forEach(line=>{ const m=line.match(/^(\d+)[º°]?\s+(.+)$/i); if(m){ const lvl=Number(m[1]); if(lvl>=1&&lvl<=20) gains[lvl]=m[2].trim(); }}); return gains; }
 
 function extractSpecUnlocks(text,lvl){ const out=[]; const patterns=[`No nível ${lvl}`,`No ${lvl}º nível`,`Nos níveis ${lvl}`]; for(const p of patterns){ const idx=String(text).indexOf(p); if(idx>=0) out.push(String(text).slice(idx,idx+180).replace(/\s+/g,' ').trim()); } return out.slice(0,3); }
-function usePersist(state){ useEffect(()=>{ const persist={...state}; delete persist.credits; delete persist.firstFreeUsed; delete persist.creditPassword; localStorage.setItem(STORAGE_KEY, JSON.stringify(persist)); localStorage.setItem(CREDIT_STORAGE_KEY, JSON.stringify({credits:state.credits, firstFreeUsed:state.firstFreeUsed, creditPassword:state.creditPassword})); },[state]); }
+function usePersist(state){ useEffect(()=>{ const persist={...state}; delete persist.credits; delete persist.firstFreeUsed; delete persist.creditPassword; delete persist.toast; localStorage.setItem(STORAGE_KEY, JSON.stringify(persist)); localStorage.setItem(CREDIT_STORAGE_KEY, JSON.stringify({credits:state.credits, firstFreeUsed:state.firstFreeUsed, creditPassword:state.creditPassword})); },[state]); }
 function Tooltip({text}){ const [open,setOpen]=useState(false); return <span className="tip"><button onClick={()=>setOpen(!open)} className="q">?</button>{open&&<span className="tipbox">{text}</span>}</span>; }
 function ModalText({title,text,onClose}){ return <div className="modalOverlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modalHead"><h2>{title}</h2><button onClick={onClose}>Fechar</button></div><div className="modalText">{String(text||'').split(/\n{2,}|(?=•)/).filter(Boolean).map((p,i)=><p key={i}>{p.trim()}</p>)}</div></div></div>; }
 function CreditAdminButton({state,dispatch}){
@@ -383,7 +386,12 @@ function App(){ const [state,dispatch]=useReducer(reducer,undefined,initialState
   return <div className="app"><header className="top"><div><h1>Feiticeiros & Maldições</h1><p>Ficha automatizada · criação guiada · compêndio interno · banco comunitário de técnicas</p></div><div className="topActions"><span className="pill"><Coins size={16}/> {state.credits} créditos</span><CreditAdminButton state={state} dispatch={dispatch}/><select value={c.id} onChange={e=>dispatch({type:'selectCharacter',id:e.target.value})}>{state.characters.map(ch=><option key={ch.id} value={ch.id}>{ch.name||'Personagem sem nome'}</option>)}</select><button onClick={()=>dispatch({type:'newCharacter'})}>Novo</button><button onClick={()=>downloadState(state)}>Exportar</button><label className="button">Importar<input type="file" hidden accept=".json" onChange={e=>importFile(e,dispatch)}/></label><button className="danger" onClick={()=>confirm('Resetar dados locais?')&&dispatch({type:'reset'})}>Reset local</button></div></header>
   <nav className="tabs"><button className="hamb" onClick={()=>setShowMobile(!showMobile)}>{showMobile?'Ocultar abas':'Mostrar abas'}</button><div className={showMobile?'tabsInner open':'tabsInner'}>{TABS.map(t=><button key={t} className={state.activeTab===t?'active':''} onClick={()=>dispatch({type:'tab',tab:t})}>{t}{t==='Criação Guiada'&&pending.length?<b>{pending.length}</b>:null}</button>)}</div></nav>
   {pending.length>0 && <div className="pendingBar"><AlertTriangle size={18}/><b>Ficha com {pending.length} pendências.</b>{pending.slice(0,5).map(p=><span key={p.id}>{p.label}{p.tab&&<button onClick={()=>dispatch({type:'tab',tab:p.tab})}>Ir</button>}</span>)}</div>}
-  <main>{state.activeTab==='Criação Guiada'&&<Creation c={c} state={state} dispatch={dispatch} tasks={tasks}/>} {state.activeTab==='Ficha/Combate'&&<CombatSheet c={c} dispatch={dispatch} stats={stats}/>} {state.activeTab==='Valores'&&<Values c={c} dispatch={dispatch} stats={stats}/>} {state.activeTab==='Registro e Inventário'&&<Inventory c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Mundano'&&<Mundane c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Amaldiçoado'&&<Cursed c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Restrito'&&<Restricted c={c} dispatch={dispatch}/>} {state.activeTab==='Bônus de Interlúdio'&&<Interlude c={c} dispatch={dispatch}/>} {state.activeTab==='Invocações'&&<Summons c={c} dispatch={dispatch}/>} {state.activeTab==='Técnicas'&&<TechniqueBank c={c} state={state} dispatch={dispatch}/>} {state.activeTab==='Level Up'&&<LevelUp c={c} dispatch={dispatch}/>} {state.activeTab==='Compêndio'&&<Compendium/>} {state.activeTab==='Admin'&&<Admin state={state}/>}</main></div> }
+  <main>{state.activeTab==='Criação Guiada'&&<Creation c={c} state={state} dispatch={dispatch} tasks={tasks}/>} {state.activeTab==='Ficha/Combate'&&<CombatSheet c={c} dispatch={dispatch} stats={stats}/>} {state.activeTab==='Valores'&&<Values c={c} dispatch={dispatch} stats={stats}/>} {state.activeTab==='Registro e Inventário'&&<Inventory c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Mundano'&&<Mundane c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Amaldiçoado'&&<Cursed c={c} dispatch={dispatch}/>} {state.activeTab==='Perfil Restrito'&&<Restricted c={c} dispatch={dispatch}/>} {state.activeTab==='Bônus de Interlúdio'&&<Interlude c={c} dispatch={dispatch}/>} {state.activeTab==='Invocações'&&<Summons c={c} dispatch={dispatch}/>} {state.activeTab==='Técnicas'&&<TechniqueBank c={c} state={state} dispatch={dispatch}/>} {state.activeTab==='Level Up'&&<LevelUp c={c} dispatch={dispatch}/>} {state.activeTab==='Compêndio'&&<Compendium/>} {state.activeTab==='Admin'&&<Admin state={state}/>}</main><Toast toast={state.toast} dispatch={dispatch}/></div> }
+function Toast({toast,dispatch}){
+  useEffect(()=>{ if(!toast) return; const t=setTimeout(()=>dispatch({type:'clearToast',id:toast.id}), 2600); return ()=>clearTimeout(t); },[toast, dispatch]);
+  if(!toast) return null;
+  return createPortal(<div className="toastWrap"><div className={`toast ${toast.kind||'good'}`}><CheckCircle2 size={16}/><span>{toast.text}</span></div></div>, document.body);
+}
 function Field({label,children,help}){ return <label className="field"><span>{label}{help&&<Tooltip text={help}/>}</span>{children}</label> }
 function Select({value,onChange,children}){ return <select value={value||''} onChange={e=>onChange(e.target.value)}>{children}</select> }
 
@@ -849,8 +857,29 @@ function SpecializationSkillPicker({c,dispatch,cfg,skillPool,skillMax}){
       <div className={chosen<g.count?'notice warnNotice':'notice'}><b>Escolha obrigatória: {g.options.map(skillName).join(' ou ')} ({chosen}/{g.count})</b><span> — obrigatória além do grupo acima, não conta como perícia livre.</span></div>
       <LimitedChoiceGrid title={`Escolha ${g.count} entre ${g.options.map(skillName).join(' ou ')}`} items={candidates.map(s=>({...s, originalText:(SKILL_HELP[s.id]?SKILL_HELP[s.id]+' ':'')+'Escolha obrigatória desta especialização.'}))} selected={selected} limit={skillMax} onChange={onChange}/>
     </div>; })}
-    <div className="notice"><b>Perícias livres: {totalChosen}/{skillMax}</b><span> — qualquer perícia treinável, além das {cfg.skillBaseNeed} do grupo obrigatório{groups.length>0?` e das escolhas obrigatórias`:''}{cfg.skillFixed.length>0?` e das ${cfg.skillFixed.length} fixas`:''}. Extras por INT ou SAB: +{extraSkillSlots(c)}.</span></div>
+    <ExtraSkillAttributePicker c={c} dispatch={dispatch}/>
+    <div className="notice"><b>Perícias livres: {totalChosen}/{skillMax}</b><span> — qualquer perícia treinável, além das {cfg.skillBaseNeed} do grupo obrigatório{groups.length>0?` e das escolhas obrigatórias`:''}{cfg.skillFixed.length>0?` e das ${cfg.skillFixed.length} fixas`:''}.</span></div>
     <LimitedChoiceGrid title="Outras perícias treináveis" items={freeCandidates.map(s=>({...s, originalText:SKILL_HELP[s.id]}))} selected={selected} limit={skillMax} onChange={onChange}/>
+  </div>;
+}
+function ExtraSkillAttributePicker({c,dispatch}){
+  const intMod=Math.max(0,mod(finalAttr(c,'intelligence')));
+  const wisMod=Math.max(0,mod(finalAttr(c,'wisdom')));
+  const chosenAttr=c.choices?.extraSkillAttribute||'';
+  const chosenMod=extraSkillAttributeMod(c);
+  const masterCount=extraSkillMasterCount(c);
+  const setAttr=v=>{ if(v!==chosenAttr && chosenAttr && !confirm('No livro, a escolha entre Inteligência ou Sabedoria para perícias extras é definitiva e não pode ser revertida após a criação. Trocar mesmo assim?')) return; dispatch({type:'choice',key:'extraSkillAttribute',value:v}); };
+  return <div className="notice">
+    <b>Perícias extras por atributo (escolha definitiva no livro):</b>
+    <div className="row" style={{marginTop:6}}>
+      <select value={chosenAttr} onChange={e=>setAttr(e.target.value)}>
+        <option value="">— nenhuma escolhida —</option>
+        <option value="intelligence">Inteligência (mod. +{intMod})</option>
+        <option value="wisdom">Sabedoria (mod. +{wisMod})</option>
+      </select>
+      {chosenAttr && chosenMod>0 && <Field label="Quantas dessas viram Perícia Mestre (em perícia já treinada) em vez de nova treinada?"><input type="number" min="0" max={chosenMod} value={masterCount} onChange={e=>dispatch({type:'choice',key:'extraSkillMasterCount',value:Math.max(0,Math.min(chosenMod,Number(e.target.value)||0))})}/></Field>}
+    </div>
+    <span>{chosenAttr?` Você ganha ${chosenMod} perícia(s) extra(s) por ${chosenAttr==='intelligence'?'Inteligência':'Sabedoria'}: ${extraSkillSlots(c)} vira(m) nova(s) perícia(s) treinada(s)${masterCount>0?` e ${masterCount} vira(m) Perícia Mestre em uma perícia já treinada`:''}.`:' Escolha Inteligência ou Sabedoria para liberar perícias extras — o livro não permite somar as duas.'}</span>
   </div>;
 }
 function attributeIncreaseMap(c){ return c.choices?.attributeIncreases || {}; }
@@ -914,7 +943,6 @@ function Mundane({c,dispatch}){
   const totalPossible = split.choicesByLevel.filter(g=>Number(c.level||1)>=g.level).reduce((sum,g)=>sum+g.abilities.length,0);
   return <section className="grid gap mundanePage"><AttributeLimitControls c={c} dispatch={dispatch}/><Panel title="Perfil Mundano"><div className="grid3"><Stat label="Especialização" value={sp?.name||'—'}/><Stat label="Origem" value={org?.name||'—'}/><Stat label="Exaustão" value={c.mundaneProfile?.exhaustionLevel||0}/></div><div className="notice"><b>Maestrias/Treinamentos:</b> {cfg.masteryText}</div></Panel>
     <details className="collapsePanel"><summary>Habilidades automáticas e escolhas fixas</summary><div className="collapseContent"><div className="classSection"><h3>Origem</h3><div className="classAutoGrid">{org?<ClassFeatureReadOnly feature={{title:org.name,text:org.originalText}}/>:<p>Escolha uma origem.</p>}</div></div><div className="classSection"><h3>Base da Especialização</h3><p className="muted">Habilidades que entram automaticamente. Se o texto exigir uma escolha, selecione uma opção detectada no próprio texto.</p><div className="classAutoGrid">{split.base.length?split.base.map(f=><ClassBaseCard key={f.id} feature={f} c={c} dispatch={dispatch}/>):<p>Escolha uma especialização.</p>}</div></div></div></details>
-    {totalAttributeIncreaseEntitlement(c)>0&&<AttributeIncreaseManager c={c} dispatch={dispatch}/>}    
     <Panel title={`Habilidades de Classe por nível: ${selectedFeatures.length}/${featureLimit}`}><p className="muted">Habilidades escolhíveis agrupadas por nível mínimo. Texto extraído do livro, sem resumo.</p><div className="notice"><b>Disponíveis no seu nível:</b> {totalPossible}. <b>Limite atual:</b> {featureLimit}.</div><div className="levelAbilityList">{split.choicesByLevel.length?split.choicesByLevel.map(group=><ClassLevelGroup key={group.level} group={group} c={c} selected={selectedFeatures} limit={featureLimit} dispatch={dispatch}/>):<p>Nenhuma habilidade de classe detectada para esta especialização.</p>}</div>{split.tables.length>0&&<details className="collapseBox"><summary>Tabelas e desbloqueios detectados</summary><div className="classAutoGrid">{split.tables.map(f=><ClassFeatureReadOnly key={f.id} feature={f}/>)}</div></details>}</Panel>
     <TalentMechanicsPanel c={c} dispatch={dispatch}/><Panel title={`Talentos e escolhas de level up: ${selectedTalents.length}/${tMax}`}><p className="muted">Talentos competem com habilidades de classe quando o level up permite escolher entre um ou outro. Use “?” para consultar texto e requisitos.</p>{escolhidoId(c.originId)&&<div className="notice"><b>Talentos exclusivos de O Escolhido (homebrew) liberados abaixo.</b> O Grande Lorde e O Grande Duque são mutuamente exclusivos; Ancestral de Nascien exige nível 8.</div>}<LimitedChoiceGrid title="Talentos disponíveis" items={talentsPool(c)} selected={selectedTalents} limit={tMax} requirementCheck={t=>escolhidoTalentRequirementStatus(c,t)} onChange={arr=>dispatch({type:'choice',key:'talents',value:clampSelection(arr,talentsPool(c).map(t=>t.id),tMax)})}/></Panel></section> }
 function LevelUp({c,dispatch}){
@@ -1095,7 +1123,7 @@ function specializationFixedSkills(c){ return specTrainingConfig(c).skillFixed||
 function selectedTrainedSkills(c){ return [...new Set([...(c.choices.skills||[]), ...originFixedSkills(c), ...specializationFixedSkills(c)])]; };
 function selectedMasterSkills(c){ return [...new Set([...(c.choices.masterSkills||[]), ...originMasterSkills(c)])]; };
 function selectedSkillCount(c){ return (c.choices.skills||[]).length; };
-function masterSkillLimit(c){ let n=0; if(Number(c.level||1)>=10) n+=1; if(hasTalentByName(c,'Tempestade De Ideias')) n+=1; return n; };
+function masterSkillLimit(c){ let n=0; if(Number(c.level||1)>=10) n+=1; if(hasTalentByName(c,'Tempestade De Ideias')) n+=1; n+=extraSkillMasterCount(c); return n; };
 function talentLimit(c){
   const base=Math.max(0, Number(c.level||1)-1);
   const featuresSelected=(c.choices?.mundaneFeatures||[]).length;
