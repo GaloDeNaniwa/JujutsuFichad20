@@ -77,4 +77,12 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .mechSummary .bonusList li{position:relative;padding:8px 12px 8px 30px;border:1px solid rgba(247,196,83,.25);border-radius:10px;background:rgba(0,0,0,.22);line-height:1.4}
 .mechSummary .bonusList li::before{content:'+';position:absolute;left:10px;top:7px;color:var(--gold);font-weight:900}
 .mechSummary .playstyleNote{border:1px solid rgba(140,255,189,.3);background:rgba(140,255,189,.06);border-radius:10px;padding:10px 12px;color:var(--text)}
+
+/* v10 — catálogo de armas simples/complexas com aviso de maestria */
+.weaponCategoryBlock{margin-top:10px}
+.weaponCategoryBlock h4{margin:0 0 4px;color:var(--gold)}
+.weaponCategoryBlock small{color:var(--muted,#9a8f78);font-weight:400}
+.weaponCategoryBlock p.small{margin:0 0 8px;font-size:.82rem;line-height:1.45}
+.catalogPick.unmastered button{border-color:#7b2222;background:rgba(123,34,34,.12);color:#ffd8d8}
+.catalogPick.unmastered button svg{margin-right:4px;vertical-align:-2px;color:#ff8f8f}
 .mechSummary .playstyleNote b{color:var(--ok)}

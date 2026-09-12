@@ -216,12 +216,19 @@
         ],
         "resMax": 1,
         "skillBaseAllowed": [
-          "oficio",
-          "atletismo",
-          "acrobacia"
+          "oficio"
         ],
         "skillBaseNeed": 1,
         "skillAnyNeed": 3,
+        "skillChoiceGroups": [
+          {
+            "options": [
+              "atletismo",
+              "acrobacia"
+            ],
+            "count": 1
+          }
+        ],
         "masteries": [
           "Armas Simples",
           "Armas Marciais",
@@ -875,12 +882,19 @@
         ],
         "resMax": 1,
         "skillBaseAllowed": [
-          "oficio",
-          "atletismo",
-          "acrobacia"
+          "oficio"
         ],
         "skillBaseNeed": 2,
         "skillAnyNeed": 3,
+        "skillChoiceGroups": [
+          {
+            "options": [
+              "atletismo",
+              "acrobacia"
+            ],
+            "count": 1
+          }
+        ],
         "masteries": [
           "Todas as armas",
           "Todos os escudos"
@@ -1560,12 +1574,14 @@
         ],
         "resMax": 1,
         "skillBaseAllowed": [
-          "oficio",
-          "feiticaria",
-          "ocultismo"
+          "oficio"
         ],
         "skillBaseNeed": 2,
         "skillAnyNeed": 2,
+        "skillFixed": [
+          "feiticaria",
+          "ocultismo"
+        ],
         "masteries": [
           "Armas Simples",
           "Armas a Distância"
@@ -2207,12 +2223,14 @@
         ],
         "resMax": 1,
         "skillBaseAllowed": [
-          "oficio",
-          "percepcao",
-          "persuasao"
+          "oficio"
         ],
         "skillBaseNeed": 1,
         "skillAnyNeed": 2,
+        "skillFixed": [
+          "percepcao",
+          "persuasao"
+        ],
         "masteries": [
           "Armas Simples",
           "Armas a Distância"
@@ -2696,12 +2714,14 @@
         ],
         "resMax": 1,
         "skillBaseAllowed": [
-          "oficio",
-          "medicina",
-          "prestidigitacao"
+          "oficio"
         ],
         "skillBaseNeed": 2,
         "skillAnyNeed": 3,
+        "skillFixed": [
+          "medicina",
+          "prestidigitacao"
+        ],
         "masteries": [
           "Armas Simples",
           "Escudos"
@@ -10068,12 +10088,19 @@
       ],
       "resMax": 1,
       "skillBaseAllowed": [
-        "oficio",
-        "atletismo",
-        "acrobacia"
+        "oficio"
       ],
       "skillBaseNeed": 1,
       "skillAnyNeed": 3,
+      "skillChoiceGroups": [
+        {
+          "options": [
+            "atletismo",
+            "acrobacia"
+          ],
+          "count": 1
+        }
+      ],
       "masteries": [
         "Armas Simples",
         "Armas Marciais",
@@ -10097,12 +10124,19 @@
       ],
       "resMax": 1,
       "skillBaseAllowed": [
-        "oficio",
-        "atletismo",
-        "acrobacia"
+        "oficio"
       ],
       "skillBaseNeed": 2,
       "skillAnyNeed": 3,
+      "skillChoiceGroups": [
+        {
+          "options": [
+            "atletismo",
+            "acrobacia"
+          ],
+          "count": 1
+        }
+      ],
       "masteries": [
         "Todas as armas",
         "Todos os escudos"
@@ -10125,12 +10159,14 @@
       ],
       "resMax": 1,
       "skillBaseAllowed": [
-        "oficio",
-        "feiticaria",
-        "ocultismo"
+        "oficio"
       ],
       "skillBaseNeed": 2,
       "skillAnyNeed": 2,
+      "skillFixed": [
+        "feiticaria",
+        "ocultismo"
+      ],
       "masteries": [
         "Armas Simples",
         "Armas a Distância"
@@ -10153,12 +10189,14 @@
       ],
       "resMax": 1,
       "skillBaseAllowed": [
-        "oficio",
-        "percepcao",
-        "persuasao"
+        "oficio"
       ],
       "skillBaseNeed": 1,
       "skillAnyNeed": 2,
+      "skillFixed": [
+        "percepcao",
+        "persuasao"
+      ],
       "masteries": [
         "Armas Simples",
         "Armas a Distância"
@@ -10181,12 +10219,14 @@
       ],
       "resMax": 1,
       "skillBaseAllowed": [
-        "oficio",
-        "medicina",
-        "prestidigitacao"
+        "oficio"
       ],
       "skillBaseNeed": 2,
       "skillAnyNeed": 3,
+      "skillFixed": [
+        "medicina",
+        "prestidigitacao"
+      ],
       "masteries": [
         "Armas Simples",
         "Escudos"
