@@ -170,8 +170,10 @@ function reducer(state, action){
     case 'applySantuarioTempHp': return withChar(c=>{ const s=calc(c); const temp=Number(c.combat.hpTemp||0)>0 ? c.combat.hpTemp : Math.floor(s.hpMax/3); return {...c, combat:{...c.combat, hpTemp:temp}}; });
     case 'toggleCondition': return withChar(c=>({ ...c, combat:{...c.combat, conditions:c.combat.conditions.includes(action.id)?c.combat.conditions.filter(x=>x!==action.id):[...c.combat.conditions,action.id]}}));
     case 'log': return withChar(c=>({...c, combat:{...c.combat, log:[{id:uid(),at:new Date().toISOString(),...action.entry},...c.combat.log].slice(0,80)}}));
-    case 'applyDamage': return withChar(c=>{ const d=Number(action.value)||0; const s=calc(c); const curr=c.combat.hpCurrent ?? s.hpMax; return {...c, combat:{...c.combat, hpCurrent:Math.max(0,curr-d), log:[{id:uid(),type:'damage',label:`Dano ${d}`,at:new Date().toISOString()},...c.combat.log]}} });
+    case 'applyDamage': return withChar(c=>{ const d=Math.max(0,Number(action.value)||0); const s=calc(c); const curr=c.combat.hpCurrent ?? s.hpMax; const temp=Number(c.combat.hpTemp||0); const absorbed=Math.min(temp,d); const remaining=d-absorbed; return {...c, combat:{...c.combat, hpCurrent:Math.max(0,curr-remaining), hpTemp:temp-absorbed, log:[{id:uid(),type:'damage',label:`Dano ${d}${absorbed?` (${absorbed} absorvido por PV temporário)`:''}`,at:new Date().toISOString()},...c.combat.log]}} });
     case 'applyHeal': return withChar(c=>{ const h=Number(action.value)||0; const s=calc(c); const curr=c.combat.hpCurrent ?? s.hpMax; return {...c, combat:{...c.combat, hpCurrent:Math.min(s.hpMax,curr+h), log:[{id:uid(),type:'heal',label:`Cura ${h}`,at:new Date().toISOString()},...c.combat.log]}} });
+    case 'setTempHp': return withChar(c=>{ const s=calc(c); const cap=Math.floor(s.hpMax/2); return {...c, combat:{...c.combat, hpTemp:Math.max(0,Math.min(cap,Number(action.value)||0))}} });
+    case 'setTempPe': return withChar(c=>{ const s=calc(c); const cap=Math.floor(s.peMax/2); return {...c, combat:{...c.combat, peTemp:Math.max(0,Math.min(cap,Number(action.value)||0))}} });
     case 'spendPE': return withChar(c=>{ const v=Number(action.value)||0; const s=calc(c); const curr=c.combat.peCurrent ?? s.peMax; return {...c, combat:{...c.combat, peCurrent:Math.max(0,curr-v), log:[{id:uid(),type:'energy',label:`Gasto de PE ${v}`,at:new Date().toISOString()},...c.combat.log]}} });
     case 'spendStamina': return withChar(c=>{ const v=Number(action.value)||0; const s=calc(c); const curr=c.combat.staminaCurrent ?? s.staminaMax; return {...c, combat:{...c.combat, staminaCurrent:Math.max(0,curr-v), log:[{id:uid(),type:'stamina',label:`Gasto de Estamina ${v}`,at:new Date().toISOString()},...c.combat.log]}} });
     case 'restoreStamina': return withChar(c=>{ const s=calc(c); const curr=c.combat.staminaCurrent ?? s.staminaMax; const next=action.rest==='longo'?s.staminaMax:Math.min(s.staminaMax, curr+Math.floor(s.staminaMax/2)); return {...c, combat:{...c.combat, staminaCurrent:next, log:[{id:uid(),type:'stamina',label:`Descanso ${action.rest==='longo'?'longo':'curto'}: Estamina restaurada para ${next}/${s.staminaMax}`,at:new Date().toISOString()},...c.combat.log]}} });
@@ -664,24 +666,39 @@ function featureCardsFromSpec(sp){
 }
 function FeatureCard({title,text}){ const [open,setOpen]=useState(false); const formatted=formatRuleText(text||''); return <div className="feature readable"><h3>{title}</h3><div className="textPreview">{formatted.slice(0,700)}{formatted.length>700?'...':''}</div><button onClick={()=>setOpen(true)}>Consultar texto completo</button>{open&&<ModalText title={title} text={formatted} onClose={()=>setOpen(false)}/>}</div> }
 
+function equipStatRows(item){
+  const cost=`C${item.cost??0} / E${item.spaces??0}`;
+  if(item.type==='weapon') return [['Dano',item.damage||'-'],['Crítico',item.critical||'-'],['Grupo',item.group||'-'],['Tipo',item.kind||'-'],['Custo/Espaço',cost]];
+  if(item.type==='uniform') return [['Defesa',`+${item.defenseBonus??0}`],...(item.penalty?[['Ônus',item.penalty]]:[]),['Custo/Espaço',cost]];
+  if(item.type==='shield') return [['Dano',item.damage||'-'],['RD',item.rd??0],...(item.penalty?[['Ônus',item.penalty]]:[]),['Custo/Espaço',cost]];
+  if(item.type==='special') return [['Categoria',item.category||'-'],['Custo/Espaço',cost]];
+  return [['Custo/Espaço',cost]];
+}
 function WeaponCard({item,dispatch,compact,character}){
   const [open,setOpen]=useState(false);
-  const isShield=item.type==='shield'; const isUniform=item.type==='uniform';
+  const isUniform=item.type==='uniform';
   const canUpgrade=item.type==='weapon'||item.type==='uniform'||item.type==='shield';
+  const isStatic=item.type==='kit'||item.type==='special';
   const warn=character && item.equipped && ((item.type==='weapon'&&!hasWeaponMastery(character,item))||(item.type==='shield'&&!hasShieldMastery(character,item)));
   const propsText=Array.isArray(item.properties)?item.properties.join(', '):(item.properties||'');
   const edit=(field,value)=>dispatch({type:'updateItemField',instanceId:item.instanceId,field,value});
   const hasExtra=propsText||item.specialText||item.customNotes;
+  const rows=equipStatRows(item);
+  const descPreview=formatRuleText(item.originalText||'');
   return <div className={`equipCard sheetCard ${warn?'invalid':''}`}>
     <div className="equipTitle"><b>{item.name}</b><span>{item.freeStarter?'Grátis':item.type}</span></div>
     {warn&&<div className="bad small"><AlertTriangle size={14}/> Sem maestria pela especialização atual.</div>}
-    <div className="equipGrid"><span>Grau Am.</span>{canUpgrade&&dispatch?<select value={item.grade||'—'} onChange={e=>edit('grade',e.target.value)}><option value="—">—</option>{['4º Grau','3º Grau','2º Grau','1º Grau','Grau Especial'].map(g=><option key={g} value={g}>{g}</option>)}</select>:<b>{item.grade||'-'}</b>}<span>{isUniform?'Defesa':isShield?'Dano/RD':'Dano'}</span><b>{isUniform?item.defenseBonus:isShield?`${item.damage||'-'} / RD ${item.rd||0}`:item.damage}</b><span>Grupo/Tipo</span><b>{item.group||item.category||item.kind||'-'}</b><span>Crítico/Ônus</span><b>{item.critical||item.penalty||'-'}</b><span>Alcance</span><b>{item.range||item.kind||'-'}</b><span>Custo/Espaço</span><b>C{item.cost??0} / E{item.spaces??0}</b></div>
+    <div className="equipGrid">
+      {canUpgrade && <><span>Grau Am.</span>{dispatch?<select value={item.grade||'—'} onChange={e=>edit('grade',e.target.value)}><option value="—">—</option>{['4º Grau','3º Grau','2º Grau','1º Grau','Grau Especial'].map(g=><option key={g} value={g}>{g}</option>)}</select>:<b>{item.grade||'-'}</b>}</>}
+      {rows.map(([label,value],i)=><React.Fragment key={i}><span>{label}</span><b>{value}</b></React.Fragment>)}
+    </div>
     {!compact && <>
-      {canUpgrade && dispatch ? <details className="equipCharDetails"><summary>Características / evolução de grau{hasExtra?'':' (vazio)'}</summary>
+      {canUpgrade && dispatch && <details className="equipCharDetails"><summary>Características / evolução de grau{hasExtra?'':' (vazio)'}</summary>
         <span className="miniLabel">Propriedades</span><textarea className="equipEditField" rows={2} value={propsText} placeholder="Propriedades da arma/item..." onChange={e=>edit('properties',e.target.value)}/>
         <span className="miniLabel">Habilidade Especial</span><textarea className="equipEditField" rows={2} value={item.specialText||''} placeholder="Habilidade especial ganha ao evoluir de grau..." onChange={e=>edit('specialText',e.target.value)}/>
         <span className="miniLabel">Encantamentos / Característica Especial</span><textarea className="equipEditField" rows={2} value={item.customNotes||''} placeholder="Encantamentos, gravações, características especiais..." onChange={e=>edit('customNotes',e.target.value)}/>
-      </details> : (hasExtra && <p className="muted small">{propsText||item.specialText||item.customNotes}</p>)}
+      </details>}
+      {isStatic && descPreview && <p className="muted small equipDesc">{descPreview.slice(0,220)}{descPreview.length>220?'…':''}</p>}
       <div className="row"><button onClick={()=>dispatch({type:'equipItem',instanceId:item.instanceId,singleType:isUniform?'uniform':null})}>{item.equipped?'Desequipar':'Equipar'}</button><button className="danger" onClick={()=>dispatch({type:'removeItem',instanceId:item.instanceId})}><Trash2 size={16}/>Remover</button><button onClick={()=>setOpen(true)}>Ver descrição</button></div>
     </>}
     {open&&<ModalText title={item.name} text={formatRuleText(item.originalText||'Sem descrição cadastrada.')} onClose={()=>setOpen(false)}/>}
@@ -697,9 +714,88 @@ function EquipmentTypeGroup({type,items,dispatch,character}){
   </div>;
 }
 function Inventory({c,dispatch}){ const [filter,setFilter]=useState(''); const catalog=allCatalog().filter(i=>(i.name+' '+i.type+' '+(i.category||'')).toLowerCase().includes(filter.toLowerCase())); return <section className="grid gap"><Panel title={`Inventário — ${inventorySpaces(c)} / ${inventoryMax(c)} espaços`}><div className="notice"><b>Maestrias atuais:</b> {specTrainingConfig(c).masteryText}</div><div className="grid2"><Field label="Dinheiro atual"><input type="number" value={c.inventory.money} onChange={e=>dispatch({type:'inventory',key:'money',value:Number(e.target.value)})}/></Field><Field label="Espaços extras"><input type="number" value={c.inventory.extraSpaces} onChange={e=>dispatch({type:'inventory',key:'extraSpaces',value:Number(e.target.value)})}/></Field></div><Field label="Buscar no catálogo completo"><input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="arma, uniforme, escudo, kit, acessório..."/></Field><div className="catalogGroups"><WeaponCatalogGroup items={catalog.filter(i=>i.type==='weapon')} dispatch={dispatch} character={c}/><CatalogGroup title="Uniformes" items={catalog.filter(i=>i.type==='uniform')} dispatch={dispatch}/><CatalogGroup title="Escudos" items={catalog.filter(i=>i.type==='shield')} dispatch={dispatch}/><CatalogGroup title="Kits" items={catalog.filter(i=>i.type==='kit')} dispatch={dispatch}/><CatalogGroup title="Itens Especiais / Acessórios" items={catalog.filter(i=>i.type==='special')} dispatch={dispatch}/></div></Panel><Panel title={`Equipamentos — ${c.inventory.items.length} item(ns)`}><p className="muted">Itens marcados como Grátis não contam no limite de 2 equipamentos iniciais de custo 1. Só Armas, Uniformes e Escudos podem virar Ferramentas Amaldiçoadas e ganhar Grau (regra do livro) — edite o Grau e as características deles conforme evoluem. Kits e Itens Especiais/Acessórios não têm progressão de Grau.</p>{c.inventory.items.length===0 && <p className="muted">Nenhum item no inventário ainda — adicione algo no catálogo acima.</p>}{['weapon','uniform','shield','kit','special'].map(type=><EquipmentTypeGroup key={type} type={type} items={c.inventory.items.filter(i=>i.type===type)} dispatch={dispatch} character={c}/>)}</Panel><Panel title="Anotações"><textarea value={c.inventory.notes} onChange={e=>dispatch({type:'inventory',key:'notes',value:e.target.value})}/></Panel></section> }
-function actionTextFor(a){ const raw=a.originalText||''; const names=rules.combatActions.map(x=>String(x.name).toUpperCase()); const target=String(a.name).toUpperCase(); const idx=raw.toUpperCase().indexOf(target); if(idx<0) return raw; let end=raw.length; for(const n of names){ if(n===target) continue; const j=raw.toUpperCase().indexOf(n, idx+target.length); if(j>idx && j<end) end=j; } return raw.slice(idx, Math.min(end, idx+1800)).trim(); }
-function ActionCard({a}){ const [open,setOpen]=useState(false); const txt=formatRuleText(actionTextFor(a)); return <div className="actionCard"><h3>{a.name}</h3><div className="textPreview actionText">{txt.slice(0,450)}{txt.length>450?'...':''}</div><button onClick={()=>setOpen(true)}>Ver ação completa</button>{open&&<ModalText title={a.name} text={txt} onClose={()=>setOpen(false)}/>}</div> }
-function CombatSheet({c,dispatch,stats}){ const [dmg,setDmg]=useState(''); const [heal,setHeal]=useState(''); const [pe,setPe]=useState(''); const [stam,setStam]=useState(''); const equipped=c.inventory.items.filter(i=>i.equipped); const hasStamina=restringidoIsSpec(c); return <section className="grid gap"><Panel title="Ficha / Combate"><div className="heroGrid"><div><h2>{c.name||'Personagem sem nome'}</h2><p>{origin(c)?.name||'Origem não escolhida'} · {specialization(c)?.name||'Especialização não escolhida'} · Nível {c.level}</p></div><Stat label="Defesa" value={stats.defense} icon={<Shield/>}/><Stat label="Atenção" value={stats.attention} icon={<Eye/>}/><Stat label="Movimento" value={`${stats.movement}m`} icon={<Swords/>}/>{stats.cd!=null&&<Stat label="CD" value={stats.cd} icon={<Zap/>}/>}{stats.rd>0&&<Stat label="RD" value={stats.rd}/>}{stats.attackBonus>0&&<Stat label="Bônus extra de acerto" value={signed(stats.attackBonus)}/>}{stats.damageBonus>0&&<Stat label="Bônus extra de dano" value={signed(stats.damageBonus)}/>}</div><div className="resources"><Resource label="PV" current={c.combat.hpCurrent??stats.hpMax} max={stats.hpMax} temp={c.combat.hpTemp}/>{!hasStamina&&<Resource label="PE" current={c.combat.peCurrent??stats.peMax} max={stats.peMax} temp={c.combat.peTemp}/>}{hasStamina&&<Resource label="Estamina" current={c.combat.staminaCurrent??stats.staminaMax} max={stats.staminaMax} temp={c.combat.staminaTemp}/>}<Resource label="Alma" current={c.combat.soulCurrent??stats.soulMax} max={stats.soulMax} temp={0}/></div><div className="grid3"><Field label="Dano recebido"><input value={dmg} onChange={e=>setDmg(e.target.value)} /><button onClick={()=>{dispatch({type:'applyDamage',value:dmg});setDmg('')}}>Aplicar dano</button></Field><Field label="Cura recebida"><input value={heal} onChange={e=>setHeal(e.target.value)} /><button onClick={()=>{dispatch({type:'applyHeal',value:heal});setHeal('')}}>Aplicar cura</button></Field>{!hasStamina&&<Field label="Gasto de PE"><input value={pe} onChange={e=>setPe(e.target.value)} /><button onClick={()=>{dispatch({type:'spendPE',value:pe});setPe('')}}>Gastar</button></Field>}{hasStamina&&<Field label="Gasto de Estamina"><input value={stam} onChange={e=>setStam(e.target.value)} /><button onClick={()=>{dispatch({type:'spendStamina',value:stam});setStam('')}}>Gastar</button></Field>}</div>{hasStamina&&<div className="row"><button onClick={()=>dispatch({type:'restoreStamina',rest:'curto'})}>Descanso curto (metade da Estamina)</button><button onClick={()=>dispatch({type:'restoreStamina',rest:'longo'})}>Descanso longo (Estamina cheia)</button></div>}{hasSantuario(c)&&<div className="notice"><b>Santuário (Dama Do Lago, Grau Especial):</b> +{Number(c.combat.santuarioStacks||0)*2} Defesa acumulada (máx +6). <div className="row"><button onClick={()=>dispatch({type:'santuarioHit'})}>Registrar acerto sofrido (+2 Defesa)</button><button onClick={()=>dispatch({type:'santuarioReset'})}>Zerar pilha (novo combate)</button><button onClick={()=>dispatch({type:'applySantuarioTempHp'})}>Aplicar PV temporário (1/3 do máx.)</button></div></div>}</Panel><Panel title="Ações rápidas e ataques"><div className="cards">{equipped.filter(i=>i.type==='weapon'||i.type==='shield').map(i=><WeaponCard key={i.instanceId} item={i} compact character={c}/>)}{equipped.length===0&&<p>Nenhum equipamento equipado.</p>}</div><div className="actionList improved">{rules.combatActions.map(a=><ActionCard key={a.id} a={a}/>)}</div></Panel><Panel title="Condições"><div className="conditionGrid">{rules.conditions.map(cond=><label key={cond.id} className={c.combat.conditions.includes(cond.id)?'condition active':'condition'}><input type="checkbox" checked={c.combat.conditions.includes(cond.id)} onChange={()=>dispatch({type:'toggleCondition',id:cond.id})}/><b>{cond.name}</b><Tooltip text={cond.originalText}/></label>)}</div></Panel><Panel title="Log de sessão"><div className="log">{c.combat.log.map(l=><div key={l.id}><span>{new Date(l.at).toLocaleTimeString()}</span>{l.label}</div>)}</div></Panel></section> }
+const ACTION_TYPE_INFO = [
+  {id:'comum', name:'Ação Comum', text:'A ação básica do turno — usada normalmente para atacar ou conjurar um Feitiço.'},
+  {id:'bonus', name:'Ação Bônus', text:'Ação extra no turno, geralmente ligada a habilidades de Especialização/Técnica (comandar invocação, ataque extra, etc.).'},
+  {id:'movimento', name:'Ação de Movimento', text:'Dedicada a se mover pelo campo de batalha, usando seu valor de Movimento.'},
+  {id:'livre', name:'Ação Livre', text:'Coisas simples (abrir porta, falar). Ilimitadas por turno, mas cada Ação Livre só pode repetir 1x por rodada.'},
+  {id:'reacao', name:'Reação', text:'Usada em resposta a um gatilho, dentro ou fora do seu turno. Só 1 uso da mesma Reação por rodada; usar qualquer reação te impede de usar outra até seu próximo turno.'},
+  {id:'completa', name:'Ação Completa', text:'Junta Ação Comum + Ação Bônus em uma coisa só — só pode ser usada se nenhuma das duas já foi gasta no turno.'},
+];
+const ACTION_HIERARCHY_NOTE = 'Hierarquia: Ação Comum > Ação Bônus > Ação de Movimento. Você pode converter uma ação de valor maior em uma de menor (ex.: usar sua Ação Comum como Movimento), mas nunca o contrário.';
+function parseActionListSection(text){
+  const lines=String(text||'').split('\n').map(x=>x.trim());
+  const items=[]; let current=null;
+  for(const line of lines){
+    if(!line || /^\d{1,4}$/.test(line)) continue;
+    const isHeader=/^[A-ZÀ-Ý][A-ZÀ-Ý0-9\s\-]{1,44}$/.test(line) && line.length>=3 && !/^MOD\.|DIST[ÂA]NCIA/.test(line);
+    if(isHeader){ if(current) items.push(current); current={id:slugify(line), name:toTitleCaseSmart(line), text:''}; }
+    else if(current){ current.text += (current.text?' ':'')+line; }
+  }
+  if(current) items.push(current);
+  return items;
+}
+function buildCombatActionCatalog(){
+  const chapter=rules.compendium.find(x=>x.id==='chapter_combate');
+  if(!chapter) return {};
+  const t=chapter.originalText||'';
+  const bounds=[
+    ['comum', t.indexOf('LISTA DE AÇÕES COMUNS')],
+    ['bonus', t.indexOf('LISTA DE AÇÕES BÔNUS')],
+    ['movimento', t.indexOf('LISTA DE AÇÕES DE MOVIMENTO')],
+    ['completa', t.indexOf('LISTA DE AÇÕES COMPLETAS')],
+    ['livre', t.indexOf('LISTA DE AÇÕES LIVRES')],
+  ].filter(([,i])=>i>=0).sort((a,b)=>a[1]-b[1]);
+  const hardEnd=t.indexOf('REALIZANDO E RESOLVENDO ATAQUES');
+  const byType={};
+  for(let i=0;i<bounds.length;i++){
+    const [key,start]=bounds[i];
+    const end=i+1<bounds.length?bounds[i+1][1]:(hardEnd>start?hardEnd:t.length);
+    const bodyStart=t.indexOf('\n',start);
+    byType[key]=parseActionListSection(t.slice(bodyStart,end));
+  }
+  return byType;
+}
+const COMBAT_ACTION_CATALOG = buildCombatActionCatalog();
+function ActionTypeCard({info}){ return <div className="actionTypeCard"><b>{info.name}</b><Tooltip text={info.text}/></div> }
+function ActionSubCard({a}){ const [open,setOpen]=useState(false); const txt=formatRuleText(a.text||''); return <div className="actionCard"><h3>{a.name}</h3><div className="textPreview actionText">{txt.slice(0,300)}{txt.length>300?'...':''}</div>{txt.length>300&&<button onClick={()=>setOpen(true)}>Ver ação completa</button>}{open&&<ModalText title={a.name} text={txt} onClose={()=>setOpen(false)}/>}</div> }
+function ActionTypeGroup({title,items}){ const [open,setOpen]=useState(false); if(!items?.length) return null; return <details className="collapseBox actionTypeGroup" open={open} onToggle={e=>setOpen(e.currentTarget.open)}><summary>{title} <small>{items.length}</small></summary><div className="actionList improved">{items.map(a=><ActionSubCard key={a.id} a={a}/>)}</div></details> }
+function CombatSheet({c,dispatch,stats}){
+  const [dmg,setDmg]=useState(''); const [heal,setHeal]=useState(''); const [pe,setPe]=useState(''); const [stam,setStam]=useState('');
+  const [tempHp,setTempHp]=useState(''); const [tempPe,setTempPe]=useState('');
+  const equipped=c.inventory.items.filter(i=>i.equipped); const hasStamina=restringidoIsSpec(c);
+  const hpTempCap=Math.floor(stats.hpMax/2), peTempCap=Math.floor(stats.peMax/2);
+  return <section className="grid gap">
+    <Panel title="Ficha / Combate">
+      <div className="heroGrid"><div><h2>{c.name||'Personagem sem nome'}</h2><p>{origin(c)?.name||'Origem não escolhida'} · {specialization(c)?.name||'Especialização não escolhida'} · Nível {c.level}</p></div><Stat label="Defesa" value={stats.defense} icon={<Shield/>}/><Stat label="Atenção" value={stats.attention} icon={<Eye/>}/><Stat label="Movimento" value={`${stats.movement}m`} icon={<Swords/>}/>{stats.cd!=null&&<Stat label="CD" value={stats.cd} icon={<Zap/>}/>}{stats.rd>0&&<Stat label="RD" value={stats.rd}/>}{stats.attackBonus>0&&<Stat label="Bônus extra de acerto" value={signed(stats.attackBonus)}/>}{stats.damageBonus>0&&<Stat label="Bônus extra de dano" value={signed(stats.damageBonus)}/>}</div>
+      <div className="resources"><Resource label="PV" current={c.combat.hpCurrent??stats.hpMax} max={stats.hpMax} temp={c.combat.hpTemp}/>{!hasStamina&&<Resource label="PE" current={c.combat.peCurrent??stats.peMax} max={stats.peMax} temp={c.combat.peTemp}/>}{hasStamina&&<Resource label="Estamina" current={c.combat.staminaCurrent??stats.staminaMax} max={stats.staminaMax} temp={c.combat.staminaTemp}/>}<Resource label="Alma" current={c.combat.soulCurrent??stats.soulMax} max={stats.soulMax} temp={0}/></div>
+      <div className="grid3">
+        <Field label="Dano recebido" help="PV temporário absorve o dano antes do PV atual."><input value={dmg} onChange={e=>setDmg(e.target.value)} /><button onClick={()=>{dispatch({type:'applyDamage',value:dmg});setDmg('')}}>Aplicar dano</button></Field>
+        <Field label="Cura recebida"><input value={heal} onChange={e=>setHeal(e.target.value)} /><button onClick={()=>{dispatch({type:'applyHeal',value:heal});setHeal('')}}>Aplicar cura</button></Field>
+        {!hasStamina&&<Field label="Gasto de PE"><input value={pe} onChange={e=>setPe(e.target.value)} /><button onClick={()=>{dispatch({type:'spendPE',value:pe});setPe('')}}>Gastar</button></Field>}
+        {hasStamina&&<Field label="Gasto de Estamina"><input value={stam} onChange={e=>setStam(e.target.value)} /><button onClick={()=>{dispatch({type:'spendStamina',value:stam});setStam('')}}>Gastar</button></Field>}
+        <Field label={`PV temporário (máx. ${hpTempCap}, metade do PV máx.)`} help="Não estoca: definir um novo valor substitui o antigo (sempre vale o maior). Some ao PV atual e é consumido antes dele quando você sofre dano."><input value={tempHp} placeholder={String(c.combat.hpTemp||0)} onChange={e=>setTempHp(e.target.value)}/><button onClick={()=>{dispatch({type:'setTempHp',value:tempHp});setTempHp('')}}>Definir</button></Field>
+        {!hasStamina&&<Field label={`PE temporário (máx. ${peTempCap}, metade do PE máx.)`}><input value={tempPe} placeholder={String(c.combat.peTemp||0)} onChange={e=>setTempPe(e.target.value)}/><button onClick={()=>{dispatch({type:'setTempPe',value:tempPe});setTempPe('')}}>Definir</button></Field>}
+      </div>
+      {hasStamina&&<div className="row"><button onClick={()=>dispatch({type:'restoreStamina',rest:'curto'})}>Descanso curto (metade da Estamina)</button><button onClick={()=>dispatch({type:'restoreStamina',rest:'longo'})}>Descanso longo (Estamina cheia)</button></div>}
+      {hasSantuario(c)&&<div className="notice"><b>Santuário (Dama Do Lago, Grau Especial):</b> +{Number(c.combat.santuarioStacks||0)*2} Defesa acumulada (máx +6). <div className="row"><button onClick={()=>dispatch({type:'santuarioHit'})}>Registrar acerto sofrido (+2 Defesa)</button><button onClick={()=>dispatch({type:'santuarioReset'})}>Zerar pilha (novo combate)</button><button onClick={()=>dispatch({type:'applySantuarioTempHp'})}>Aplicar PV temporário (1/3 do máx.)</button></div></div>}
+    </Panel>
+    <Panel title={`Equipamento equipado (${equipped.filter(i=>i.type==='weapon'||i.type==='shield').length})`}>
+      <div className="cards">{equipped.filter(i=>i.type==='weapon'||i.type==='shield').map(i=><WeaponCard key={i.instanceId} item={i} compact character={c}/>)}{equipped.filter(i=>i.type==='weapon'||i.type==='shield').length===0&&<p className="muted">Nenhuma arma ou escudo equipado.</p>}</div>
+    </Panel>
+    <Panel title="Ações de Combate" help="As 6 categorias de ação existem em todo turno; abaixo delas, os usos padrão de cada uma. Habilidades de Especialização/Técnica liberam mais opções.">
+      <div className="actionTypeGrid">{ACTION_TYPE_INFO.map(info=><ActionTypeCard key={info.id} info={info}/>)}</div>
+      <p className="muted small">{ACTION_HIERARCHY_NOTE}</p>
+      <ActionTypeGroup title="Ações Comuns" items={COMBAT_ACTION_CATALOG.comum}/>
+      <ActionTypeGroup title="Ações Bônus" items={COMBAT_ACTION_CATALOG.bonus}/>
+      <ActionTypeGroup title="Ações de Movimento" items={COMBAT_ACTION_CATALOG.movimento}/>
+      <ActionTypeGroup title="Ações Completas" items={COMBAT_ACTION_CATALOG.completa}/>
+      <ActionTypeGroup title="Ações Livres" items={COMBAT_ACTION_CATALOG.livre}/>
+    </Panel>
+    <Panel title="Condições"><div className="conditionGrid">{rules.conditions.map(cond=><label key={cond.id} className={c.combat.conditions.includes(cond.id)?'condition active':'condition'}><input type="checkbox" checked={c.combat.conditions.includes(cond.id)} onChange={()=>dispatch({type:'toggleCondition',id:cond.id})}/><b>{cond.name}</b><Tooltip text={cond.originalText}/></label>)}</div></Panel>
+    <Panel title="Log de sessão"><div className="log">{c.combat.log.map(l=><div key={l.id}><span>{new Date(l.at).toLocaleTimeString()}</span>{l.label}</div>)}</div></Panel>
+  </section>;
+}
 function TechList({title,keyName,list,dispatch}){ return <div><h3>{title}: {list.length}</h3><button onClick={()=>dispatch({type:'addTechFeature',key:keyName})}>Adicionar {title}</button><div className="cards">{list.map(f=><div className="feature" key={f.id}><div className="grid3"><Field label="Nome"><input value={f.name} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'name',value:e.target.value})}/></Field><Field label="Grau"><input value={f.grade} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'grade',value:e.target.value})}/></Field><Field label="Custo"><input value={f.cost} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'cost',value:e.target.value})}/></Field></div><div className="grid3"><Field label="Alvo"><input value={f.target||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'target',value:e.target.value})}/></Field><Field label="Área"><input value={f.area||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'area',value:e.target.value})}/></Field><Field label="Duração"><input value={f.duration||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'duration',value:e.target.value})}/></Field></div><Field label="Link de imagem/print da habilidade"><input placeholder="https://..." value={f.imageUrl||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'imageUrl',value:e.target.value})}/></Field>{f.imageUrl&&<img className="techPreview" src={f.imageUrl} alt="Print da habilidade"/>}<textarea value={f.text} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'text',value:e.target.value})}/><button className="danger" onClick={()=>dispatch({type:'removeTechFeature',key:keyName,id:f.id})}>Remover</button></div>)}</div></div> }
 
 
