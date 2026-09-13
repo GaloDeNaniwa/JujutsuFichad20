@@ -178,3 +178,27 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .bookPageModal{max-width:min(900px,94vw)}
 .bookPageBody{display:flex;justify-content:center;align-items:flex-start;overflow:auto;max-height:80vh;padding:8px}
 .bookPageCanvas{max-width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#fff}
+
+/* v12 — footer de card (botão de página do livro) + tipografia responsiva de combate */
+.featureFooter{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.actionTypeCard{gap:8px}
+.actionCard{display:flex;flex-direction:column}
+.actionCard .featureFooter{justify-content:space-between}
+.toolkitRow b,.actionCard h3,.actionTypeCard b{font-size:1.05rem}
+.actionCard .textPreview{font-size:1rem}
+@media(min-width:900px){
+  .toolkitRow b{font-size:1.18rem}
+  .actionCard h3{font-size:1.22rem}
+  .actionCard .textPreview{font-size:1.08rem}
+  .actionTypeCard b{font-size:1.15rem}
+}
+@media(max-width:480px){
+  .toolkitRow b{font-size:1rem}
+  .actionCard h3{font-size:1.05rem}
+  .actionCard .textPreview{font-size:.92rem}
+  .actionTypeCard b{font-size:.98rem}
+  .bookPageBtn,.toolkitViewBtn{font-size:.82rem;padding:7px 10px}
+}
+
+/* v13 — corrige checkbox gigante em cards de escolha (feature .row, ClassFeatureChoiceCard) */
+input[type=checkbox]{width:20px;height:20px;min-height:20px;flex:none;background:#030303}
