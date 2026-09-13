@@ -183,6 +183,14 @@ function reducer(state, action){
     case 'levelUp': return withChar(c=>({...c, level:Number(action.toLevel), levelHistory:[{id:uid(),from:c.level,to:Number(action.toLevel),at:new Date().toISOString(),tasks:levelTasks(c, Number(action.toLevel))},...c.levelHistory]}));
     case 'addTechFeature': return withChar(c=>({...c, technique:{...c.technique, [action.key]:[...c.technique[action.key], {id:uid(),name:'',grade:'Primeiro',cost:'0',action:'Padrão',target:'',area:'',duration:'',imageUrl:'',text:''}]}}));
     case 'addPresetActive': return withChar(c=>({...c, technique:{...c.technique, actives:[...c.technique.actives, {id:uid(),name:action.preset.name,grade:'Estilo',cost:'Ver texto',action:'Ver texto',target:'',area:'',duration:'',imageUrl:'',text:action.preset.originalText}]}}));
+    case 'importTechniques': return withChar(c=>{
+      const newActives=[...c.technique.actives]; const newPassives=[...c.technique.passives];
+      for(const item of action.items){
+        const feature={id:uid(), name:item.name, grade:item.grade, cost:item.action?`Ver texto (${item.action})`:'Ver texto', action:item.action||'', target:item.target||'', area:item.area||'', duration:item.duration||'', imageUrl:'', text:[item.requisito?`Requisito: ${item.requisito}`:'', item.text].filter(Boolean).join('\n\n')};
+        if(item.isPassive) newPassives.push(feature); else newActives.push(feature);
+      }
+      return {...c, technique:{...c.technique, actives:newActives, passives:newPassives}};
+    });
     case 'updateTechFeature': return withChar(c=>({...c, technique:{...c.technique, [action.key]:c.technique[action.key].map(f=>f.id===action.id?{...f,[action.field]:action.value}:f)}}));
     case 'removeTechFeature': return withChar(c=>({...c, technique:{...c.technique, [action.key]:c.technique[action.key].filter(f=>f.id!==action.id)}}));
     case 'exportImport': {
@@ -531,7 +539,109 @@ function detectSpecMilestones(text=''){ const out=[]; String(text).split(/\n/).f
 function Cursed({c,dispatch}){ const groups=groupAptitudes(); const max=aptitudeLimit(c); const lvlMax=aptitudeLevelPointLimit(c); const lvlUsed=aptitudeLevelTotal(c); const levels=getAptitudeLevels(c); const cfg=specTrainingConfig(c); return <section className="grid gap"><Panel title="Aspectos de Técnica e Aptidões"><div className="grid2"><div className="miniPanel"><h3>Aspectos de Técnica</h3><Stat label="Nível de Habilidades" value="1º"/><Stat label="Habilidades Conhecidas" value={(c.technique.passives.length+c.technique.actives.length)}/><Field label="Atributo de Técnica" help="Mesmo Atributo de CD escolhido em Criação Guiada — as opções seguem a especialização atual."><Select value={c.cdAttribute} onChange={v=>dispatch({type:'update',key:'cdAttribute',value:v})}><option value="">—</option>{ATTRS.filter(([k])=>cfg.cdAttributes.includes(k)).map(([k,l])=><option key={k} value={k}>{l}</option>)}</Select></Field></div><div className="miniPanel"><h3>Níveis de Aptidão</h3><p className="muted">Distribuídos: {lvlUsed}/{lvlMax}. Cada aptidão vai de 0 a 5. Nível 1 começa com tudo 0.</p>{['Aura','Controle e Leitura','Barreira','Domínio','Energia Reversa'].map(g=><div key={g} className="aptLevelRow"><span>{g}</span><div><button disabled={levels[g]<=0} onClick={()=>dispatch({type:'setAptitudeLevel',key:g,value:levels[g]-1})}>−</button><b>{levels[g]}</b><button disabled={levels[g]>=5||lvlUsed>=lvlMax} onClick={()=>dispatch({type:'setAptitudeLevel',key:g,value:levels[g]+1})}>+</button></div><Tooltip text={aptitudeHelp(g)}/></div>)}</div></div></Panel><Panel title={`Aptidões Amaldiçoadas: ${(c.choices.aptitudes||[]).length} / ${max}`}><p className="muted">Você recebe uma aptidão amaldiçoada sempre que sobe de nível, exceto Restringido. O app bloqueia excesso e sinaliza pré-requisitos detectados no texto.</p>{Object.entries(groups).map(([group,items])=><details key={group} open={group==='Aura'}><summary>{group} · {items.length}</summary><ChoiceCards items={items} selected={c.choices.aptitudes||[]} limit={max} character={c} onChange={arr=>dispatch({type:'choice',key:'aptitudes',value:clampSelection(arr,rules.aptitudes.map(a=>a.id),max)})}/></details>)}</Panel><Panel title="Técnica"><TechniqueEditor c={c} dispatch={dispatch}/></Panel></section> }
 function aptitudeHelp(g){ return ({Aura:'Conhecimento e compreensão sobre a própria energia amaldiçoada.', 'Controle e Leitura':'Liberar, controlar e ler fluxos/aura de energia.', Barreira:'Uso e refinamento de técnicas de barreira.', Domínio:'Aptidão em técnicas de domínio e expansão.', 'Energia Reversa':'Proficiência no uso da energia reversa para regeneração e cura.'})[g]||''; }
 function ChoiceCards({items,selected,onChange,limit=999,character=null}){ const [q,setQ]=useState(''); const [modal,setModal]=useState(null); const filtered=items.filter(i=>(i.name+' '+(i.originalText||'')).toLowerCase().includes(q.toLowerCase())); return <><Field label="Buscar"><input value={q} onChange={e=>setQ(e.target.value)}/></Field><div className="cards">{filtered.map(i=>{ const checked=selected.includes(i.id); const req=character?aptitudeRequirementStatus(character,i):{ok:true}; const blocked=(!checked && selected.length>=limit)||(!checked&&!req.ok); return <div key={i.id} className={checked?'feature selected':'feature'}><div className="row"><h3>{i.name}</h3><input type="checkbox" checked={checked} disabled={blocked} onChange={e=>onChange(e.target.checked?[...selected,i.id]:selected.filter(x=>x!==i.id))}/><button className="q" onClick={()=>setModal(i)}>?</button></div>{getPrereqText(i)&&<small className={req.ok?'okText':'warn'}>Pré-requisito: {getPrereqText(i)}</small>}<p>{mechanicalPreview(i.originalText,320)}</p>{!req.ok&&<small className="warn">Bloqueado: falta {req.problems?.join(', ')}</small>}{!checked&&selected.length>=limit&&<small className="warn">Limite atingido.</small>}</div>})}</div>{modal&&<ModalText title={modal.name} text={formatRuleText(modal.originalText||'')} onClose={()=>setModal(null)}/>}</> }
-function TechniqueEditor({c,dispatch}){ return <div className="grid gap"><div className="grid2"><Field label="Nome da Técnica"><input value={c.technique.name} onChange={e=>dispatch({type:'technique',key:'name',value:e.target.value})}/></Field><Field label="Link de imagem/print da técnica"><input placeholder="https://..." value={c.technique.imageUrl||''} onChange={e=>dispatch({type:'technique',key:'imageUrl',value:e.target.value})}/></Field></div>{c.technique.imageUrl&&<img className="techPreview" src={c.technique.imageUrl} alt="Print da técnica"/>}<Field label="Funcionamento Base"><textarea value={c.technique.baseFunction} onChange={e=>dispatch({type:'technique',key:'baseFunction',value:e.target.value})}/></Field><Field label="Link de imagem/print do funcionamento base"><input placeholder="https://..." value={c.technique.baseImageUrl||''} onChange={e=>dispatch({type:'technique',key:'baseImageUrl',value:e.target.value})}/></Field>{c.technique.baseImageUrl&&<img className="techPreview" src={c.technique.baseImageUrl} alt="Print do funcionamento base"/>}<TechList title="Passivas" keyName="passives" list={c.technique.passives} dispatch={dispatch}/><TechList title="Ativas" keyName="actives" list={c.technique.actives} dispatch={dispatch}/><Panel title="Votos e Expansão"><Field label="Expansão de Domínio"><textarea value={c.technique.domain.text} onChange={e=>dispatch({type:'technique',key:'domain',value:{...c.technique.domain,text:e.target.value}})}/></Field></Panel></div> }
+let pdfjsLibPromise=null;
+function loadPdfJs(){
+  if(!pdfjsLibPromise) pdfjsLibPromise=Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]).then(([lib,worker])=>{ lib.GlobalWorkerOptions.workerSrc=worker.default; return lib; });
+  return pdfjsLibPromise;
+}
+async function extractPdfText(file){
+  const pdfjsLib = await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  const pageTexts=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    let lastY=null, line=[]; const lines=[];
+    for(const item of content.items){
+      const y = Math.round(item.transform[5]);
+      if(lastY!==null && Math.abs(y-lastY)>2){ lines.push(line.join(' ').replace(/\s+/g,' ').trim()); line=[]; }
+      line.push(item.str);
+      lastY=y;
+    }
+    if(line.length) lines.push(line.join(' ').replace(/\s+/g,' ').trim());
+    pageTexts.push(lines.filter(Boolean).join('\n'));
+  }
+  return pageTexts.join('\n\n');
+}
+const TECH_MARKER_RE = /Habilidade\s+de\s+(Feit(?:i|í)ço|Ben[çc][ãa]o\s*M[áa]xima|Bên[çc][ãa]o\s*M[áa]xima)(?:\s*(Nível\s*(\d+)))?|Habilidade\s+Passiva(?:\s*(Nível\s*(\d+)))?/i;
+function parseTechniqueDocument(text){
+  const lines = String(text||'').split('\n').map(x=>x.trim()).filter(l=>l && !/^-?\s*Feito por/i.test(l) && !/^\d{1,4}$/.test(l));
+  const markerIdx=[]; lines.forEach((line,i)=>{ if(TECH_MARKER_RE.test(line)) markerIdx.push(i); });
+  const fieldRe=/^(Conjuração|Alcance|Área|Alvo|Duração|Requisito)\s*:\s*(.*)$/i;
+  const items=[];
+  for(let mi=0; mi<markerIdx.length; mi++){
+    const idx=markerIdx[mi];
+    const markerLine=lines[idx];
+    const m=markerLine.match(TECH_MARKER_RE);
+    const isPassive=/Passiva/i.test(markerLine);
+    let name=markerLine.slice(0,m.index).trim();
+    let consumedPrevLine=false;
+    if(!name && idx>0){ name=lines[idx-1]; consumedPrevLine=true; }
+    const levelMatch=markerLine.match(/Nível\s*(\d+)/i);
+    const grade=levelMatch?`Nível ${levelMatch[1]}`:(isPassive?'Passiva':(m[1]?m[1]:'Estilo'));
+    const nextIdx = mi+1<markerIdx.length ? markerIdx[mi+1] : lines.length;
+    let bodyEnd = nextIdx;
+    if(mi+1<markerIdx.length){
+      const nextMarkerLine=lines[markerIdx[mi+1]];
+      const nextM=nextMarkerLine.match(TECH_MARKER_RE);
+      const nextNameOnSameLine=nextMarkerLine.slice(0,nextM.index).trim();
+      if(!nextNameOnSameLine) bodyEnd = Math.max(idx+1, markerIdx[mi+1]-1);
+    }
+    const bodyLines=lines.slice(idx+1, bodyEnd);
+    const fields={}; const descLines=[];
+    for(const bl of bodyLines){ const fm=bl.match(fieldRe); if(fm) fields[fm[1].toLowerCase()]=fm[2].trim(); else descLines.push(bl); }
+    items.push({
+      id:uid(), include:true, isPassive,
+      name:name||`Técnica ${mi+1}`,
+      grade,
+      action:fields['conjuração']||'',
+      area:fields['área']||'',
+      target:fields['alvo']||'',
+      duration:fields['duração']||'',
+      requisito:fields['requisito']||'',
+      text:descLines.join('\n').trim(),
+    });
+  }
+  return items;
+}
+function ImportTechniquesFromPdf({dispatch}){
+  const [items,setItems]=useState(null);
+  const [busy,setBusy]=useState(false);
+  const [err,setErr]=useState('');
+  const onFile=async e=>{
+    const f=e.target.files?.[0]; e.target.value=''; if(!f) return;
+    setBusy(true); setErr(''); setItems(null);
+    try{
+      const text=await extractPdfText(f);
+      const parsed=parseTechniqueDocument(text);
+      if(!parsed.length) setErr('Nenhuma técnica reconhecida neste PDF. O formato precisa ter "Habilidade de Feitiço/Passiva/Benção Máxima" perto do nome de cada técnica. Você ainda pode cadastrar manualmente abaixo.');
+      setItems(parsed);
+    }catch(err){ setErr('Não foi possível ler este PDF: '+(err?.message||'erro desconhecido')); }
+    setBusy(false);
+  };
+  const toggle=(id)=>setItems(list=>list.map(i=>i.id===id?{...i,include:!i.include}:i));
+  const rename=(id,name)=>setItems(list=>list.map(i=>i.id===id?{...i,name}:i));
+  const confirmImport=()=>{
+    const selected=items.filter(i=>i.include);
+    if(!selected.length) return;
+    dispatch({type:'importTechniques',items:selected});
+    setItems(null);
+  };
+  return <div className="notice">
+    <b>Importar técnicas de um PDF:</b> <span>envie o PDF da técnica homebrew e o app tenta separar cada Habilidade automaticamente pelo padrão "Habilidade de Feitiço/Passiva/Benção Máxima". Revise antes de confirmar — a extração pode errar em PDFs com layout diferente.</span>
+    <div className="row" style={{marginTop:8}}><label className="button">{busy?'Lendo PDF...':'Escolher PDF'}<input type="file" accept="application/pdf" hidden disabled={busy} onChange={onFile}/></label></div>
+    {err && <p className="bad small">{err}</p>}
+    {items && items.length>0 && <div className="pdfImportPreview">
+      {items.map(i=><div key={i.id} className={i.include?'pdfImportItem':'pdfImportItem excluded'}>
+        <label className="choiceLine"><input type="checkbox" checked={i.include} onChange={()=>toggle(i.id)}/><input className="pdfImportName" value={i.name} onChange={e=>rename(i.id,e.target.value)}/><span className="pill">{i.isPassive?'Passiva':'Ativa'} · {i.grade}</span></label>
+        <p className="muted small">{(i.action?`Conjuração: ${i.action}. `:'')}{(i.target?`Alvo: ${i.target}. `:'')}{i.text.slice(0,180)}{i.text.length>180?'…':''}</p>
+      </div>)}
+      <button className="gold" onClick={confirmImport}>Importar {items.filter(i=>i.include).length} técnica(s) selecionada(s)</button>
+    </div>}
+  </div>;
+}
+function TechniqueEditor({c,dispatch}){ return <div className="grid gap"><ImportTechniquesFromPdf dispatch={dispatch}/><div className="grid2"><Field label="Nome da Técnica"><input value={c.technique.name} onChange={e=>dispatch({type:'technique',key:'name',value:e.target.value})}/></Field><Field label="Link de imagem/print da técnica"><input placeholder="https://..." value={c.technique.imageUrl||''} onChange={e=>dispatch({type:'technique',key:'imageUrl',value:e.target.value})}/></Field></div>{c.technique.imageUrl&&<img className="techPreview" src={c.technique.imageUrl} alt="Print da técnica"/>}<Field label="Funcionamento Base"><textarea value={c.technique.baseFunction} onChange={e=>dispatch({type:'technique',key:'baseFunction',value:e.target.value})}/></Field><Field label="Link de imagem/print do funcionamento base"><input placeholder="https://..." value={c.technique.baseImageUrl||''} onChange={e=>dispatch({type:'technique',key:'baseImageUrl',value:e.target.value})}/></Field>{c.technique.baseImageUrl&&<img className="techPreview" src={c.technique.baseImageUrl} alt="Print do funcionamento base"/>}<TechList title="Passivas" keyName="passives" list={c.technique.passives} dispatch={dispatch}/><TechList title="Ativas" keyName="actives" list={c.technique.actives} dispatch={dispatch}/><Panel title="Votos e Expansão"><Field label="Expansão de Domínio"><textarea value={c.technique.domain.text} onChange={e=>dispatch({type:'technique',key:'domain',value:{...c.technique.domain,text:e.target.value}})}/></Field></Panel></div> }
 
 function Restricted({c,dispatch}){
   if(!c.isRestricted && !restringidoIsSpec(c)) return <Panel title="Perfil Restrito bloqueado"><p>Esta aba é usada por personagens com origem/caminho restrito (Restringido). Escolha a origem Restringido em Criação Guiada para liberar.</p></Panel>;

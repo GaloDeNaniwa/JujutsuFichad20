@@ -104,6 +104,12 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .actionTypeCard{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;background:#0a0908;font-weight:700;color:var(--gold)}
 .actionTypeGroup{margin-top:10px}
 
+/* v10 — importação de técnicas via PDF */
+.pdfImportPreview{display:grid;gap:10px;margin-top:12px}
+.pdfImportItem{border:1px solid var(--line);border-radius:10px;padding:10px;background:#0a0908}
+.pdfImportItem.excluded{opacity:.5}
+.pdfImportName{flex:1;min-width:160px}
+
 /* v10 — escolha de PV por nível (mínimo/fixo/rolar) */
 .hpGainGrid{display:grid;gap:8px;margin-top:8px}
 .hpGainRow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#0a0908}
