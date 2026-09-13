@@ -109,11 +109,16 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .warnPill{border-color:#7b2222;color:#ffb3b3;background:rgba(123,34,34,.15)}
 .techFeatureBody{display:grid;gap:10px;margin-top:12px}
 
+/* v10 — bloqueio por nível nas habilidades automáticas de base */
+.baseChoiceCard.locked{opacity:.55}
+
 /* v10 — resumo do que o personagem tem disponível em combate */
+.toolkitGroup summary{font-size:1.05rem}
 .toolkitGroup{margin-top:8px}
-.toolkitList{display:grid;gap:6px;margin-top:8px}
-.toolkitRow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#0a0908}
-.toolkitRow b{flex:1}
+.toolkitList{display:grid;gap:8px;margin-top:10px}
+.toolkitRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#0a0908}
+.toolkitRow b{flex:1;font-size:1.05rem;min-width:140px}
+.toolkitViewBtn{font-size:.9rem;padding:8px 14px;white-space:nowrap}
 .pill.mini{font-size:.7rem;padding:2px 6px}
 
 /* v10 — referência de tipos de ação e listas de ações de combate */
@@ -166,3 +171,10 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .creditAdmin hr{border:none;border-top:1px solid var(--line);margin:16px 0}
 .creditAdmin .grid2{margin-bottom:8px}
 .mechSummary .playstyleNote b{color:var(--ok)}
+
+/* v11 — visualização de página do livro (referência visual) */
+.bookPageBtn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(247,196,83,.4);color:var(--gold);border-radius:8px;padding:5px 10px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.bookPageBtn:hover{background:rgba(247,196,83,.1)}
+.bookPageModal{max-width:min(900px,94vw)}
+.bookPageBody{display:flex;justify-content:center;align-items:flex-start;overflow:auto;max-height:80vh;padding:8px}
+.bookPageCanvas{max-width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#fff}

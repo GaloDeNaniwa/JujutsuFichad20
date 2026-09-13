@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import { Save, Upload, Download, RotateCcw, Search, AlertTriangle, CheckCircle2, Lock, Plus, Trash2, Swords, HeartPulse, Zap, Shield, BookOpen, Eye, Coins, ChevronDown, ChevronUp } from 'lucide-react';
 import rules from './data/rules.json';
+import bookPageIndex from './data/page-index.json';
 import './styles.css';
 
 const ATTRS = [
@@ -329,7 +330,20 @@ function aptitudeLevelFor(c, group){ return Number(getAptitudeLevels(c)[group]||
 function getPrereqText(item){ const m=String(item.originalText||'').match(/\[Pré-Requisito:([^\]]+)\]/i); return m ? m[1].trim() : ''; }
 function attrFromName(n){ const x=String(n||'').toLowerCase(); if(x.includes('força')) return 'strength'; if(x.includes('destreza')) return 'dexterity'; if(x.includes('constituição')) return 'constitution'; if(x.includes('inteligência')) return 'intelligence'; if(x.includes('sabedoria')) return 'wisdom'; if(x.includes('presença')) return 'presence'; return null; }
 function aptitudeCategory(item){ const n=(item.name||'').toLowerCase(), t=((item.originalText||'')+' '+n).toLowerCase(); if(n.startsWith('aura')||n.includes('aura')||n.includes('afinidade ampliada')||n.includes('absorção elemental')) return 'Aura'; if(t.includes('barreira')) return 'Barreira'; if(t.includes('domínio')||t.includes('dominio')) return 'Domínio'; if(t.includes('energia reversa')||t.includes('reversa')) return 'Energia Reversa'; if(t.includes('controle')||t.includes('leitura')||t.includes('fluxo')||t.includes('detectar')) return 'Controle e Leitura'; return 'Outras'; }
-function aptitudeRequirementStatus(c,item){ const req=getPrereqText(item); if(!req) return {ok:true, req:''}; const problems=[]; const lvl=(String(req).match(/Nível\s*(\d+)/i)||[])[1]; if(lvl && Number(c.level)<Number(lvl)) problems.push(`Nível ${lvl}`); const apt=(String(req).match(/Nível de Aptidão em ([^0-9]+)\s*(\d+)/i)||[]); if(apt.length){ let group=apt[1].trim(); if(/aura/i.test(group)) group='Aura'; else if(/barreira/i.test(group)) group='Barreira'; else if(/domínio|dominio/i.test(group)) group='Domínio'; else if(/reversa/i.test(group)) group='Energia Reversa'; else if(/controle|leitura/i.test(group)) group='Controle e Leitura'; if(aptitudeLevelFor(c,group)<Number(apt[2])) problems.push(`${group} ${apt[2]}`); } const trained=(String(req).match(/Treinado em ([^,\]]+)/i)||[])[1]; if(trained){ const wanted=trained.trim().toLowerCase(); const ok=(c.choices.skills||[]).some(id=>skillName(id).toLowerCase().includes(wanted)); if(!ok) problems.push(`Treinado em ${trained.trim()}`); } const attrReqs=[...String(req).matchAll(/(Força|Destreza|Constituição|Inteligência|Sabedoria|Presença)\s*(\d+)/gi)]; for(const m of attrReqs){ const k=attrFromName(m[1]); if(k && (finalAttr(c,k)||0)<Number(m[2])) problems.push(`${m[1]} ${m[2]}`); } const names=(c.choices.aptitudes||[]).map(id=>rules.aptitudes.find(a=>a.id===id)?.name?.toLowerCase()).filter(Boolean); for(const a of rules.aptitudes){ if(req.toLowerCase().includes(a.name.toLowerCase()) && !names.includes(a.name.toLowerCase())) problems.push(a.name); } return {ok:problems.length===0, req, problems}; }
+const SPEC_AUTO_APTITUDES = {
+  suporte: [
+    {id:'apt_energia_reversa', level:6},
+    {id:'apt_liberação_de_energia_reversa', level:8},
+  ],
+};
+function specAutoAptitudeGrants(c){
+  const sp=specialization(c);
+  const list=SPEC_AUTO_APTITUDES[sp?.id]||[];
+  return list.map(g=>({...g, item:rules.aptitudes.find(a=>a.id===g.id), unlocked:Number(c.level||1)>=g.level})).filter(g=>g.item);
+}
+function specAutoAptitudeUnlockedIds(c){ return specAutoAptitudeGrants(c).filter(g=>g.unlocked).map(g=>g.id); }
+function effectiveAptitudeIds(c){ return [...new Set([...(c.choices.aptitudes||[]), ...specAutoAptitudeUnlockedIds(c)])]; }
+function aptitudeRequirementStatus(c,item){ const req=getPrereqText(item); if(!req) return {ok:true, req:''}; const problems=[]; const lvl=(String(req).match(/Nível\s*(\d+)/i)||[])[1]; if(lvl && Number(c.level)<Number(lvl)) problems.push(`Nível ${lvl}`); const apt=(String(req).match(/Nível de Aptidão em ([^0-9]+)\s*(\d+)/i)||[]); if(apt.length){ let group=apt[1].trim(); if(/aura/i.test(group)) group='Aura'; else if(/barreira/i.test(group)) group='Barreira'; else if(/domínio|dominio/i.test(group)) group='Domínio'; else if(/reversa/i.test(group)) group='Energia Reversa'; else if(/controle|leitura/i.test(group)) group='Controle e Leitura'; if(aptitudeLevelFor(c,group)<Number(apt[2])) problems.push(`${group} ${apt[2]}`); } const trained=(String(req).match(/Treinado em ([^,\]]+)/i)||[])[1]; if(trained){ const wanted=trained.trim().toLowerCase(); const ok=(c.choices.skills||[]).some(id=>skillName(id).toLowerCase().includes(wanted)); if(!ok) problems.push(`Treinado em ${trained.trim()}`); } const attrReqs=[...String(req).matchAll(/(Força|Destreza|Constituição|Inteligência|Sabedoria|Presença)\s*(\d+)/gi)]; for(const m of attrReqs){ const k=attrFromName(m[1]); if(k && (finalAttr(c,k)||0)<Number(m[2])) problems.push(`${m[1]} ${m[2]}`); } const names=effectiveAptitudeIds(c).map(id=>rules.aptitudes.find(a=>a.id===id)?.name?.toLowerCase()).filter(Boolean); for(const a of rules.aptitudes){ if(req.toLowerCase().includes(a.name.toLowerCase()) && !names.includes(a.name.toLowerCase())) problems.push(a.name); } return {ok:problems.length===0, req, problems}; }
 function interludeLimit(c){ return Math.max(0, Number(c.choices?.interludeFocus||0)); }
 function clampSelection(arr, allowed, max){ const clean=[...new Set(arr)].filter(x=>!allowed || allowed.includes(x)); return clean.slice(0, Math.max(0,max)); }
 function groupAptitudes(){
@@ -410,7 +424,7 @@ function Toast({toast,dispatch}){
 function Field({label,children,help}){ return <label className="field"><span>{label}{help&&<Tooltip text={help}/>}</span>{children}</label> }
 function Select({value,onChange,children}){ return <select value={value||''} onChange={e=>onChange(e.target.value)}>{children}</select> }
 
-function LimitedChoiceGrid({title,items,selected,onChange,limit=999,requirementCheck}){ return <div><h3>{title}</h3><div className="choiceGrid">{items.map(i=>{ const checked=selected.includes(i.id); const req=requirementCheck?requirementCheck(i):{ok:true,problems:[]}; const limitReached=!checked && selected.length>=limit; const blocked=limitReached || (!checked && !req.ok); const info=i.originalText||i.tooltip||SKILL_HELP[i.id]||RESISTANCE_HELP[i.id]||'Esta opção é válida para esta escolha.'; const warnText=!req.ok?`Bloqueado: ${(req.problems||[]).join(', ')}`:(limitReached?'Limite atingido':''); return <label key={i.id} className={blocked?'check blocked':'check'} title={warnText}><input type="checkbox" checked={checked} disabled={blocked} onChange={e=>onChange(e.target.checked?[...selected,i.id]:selected.filter(x=>x!==i.id))}/>{i.name}<Tooltip text={info}/>{warnText&&<small className="warn">{warnText}</small>}</label>})}</div></div> }
+function LimitedChoiceGrid({title,items,selected,onChange,limit=999,requirementCheck}){ return <div><h3>{title}</h3><div className="choiceGrid">{items.map(i=>{ const checked=selected.includes(i.id); const req=requirementCheck?requirementCheck(i):{ok:true,problems:[]}; const limitReached=!checked && selected.length>=limit; const blocked=limitReached || (!checked && !req.ok); const info=i.originalText||i.tooltip||SKILL_HELP[i.id]||RESISTANCE_HELP[i.id]||'Esta opção é válida para esta escolha.'; const warnText=!req.ok?`Bloqueado: ${(req.problems||[]).join(', ')}`:(limitReached?'Limite atingido':''); return <label key={i.id} className={blocked?'check blocked':'check'} title={warnText}><input type="checkbox" checked={checked} disabled={blocked} onChange={e=>onChange(e.target.checked?[...selected,i.id]:selected.filter(x=>x!==i.id))}/>{i.name}<Tooltip text={info}/>{bookPageIndex[i.id]&&<BookPageButton pageNumber={bookPageIndex[i.id]} title={i.name}/>}{warnText&&<small className="warn">{warnText}</small>}</label>})}</div></div> }
 function ChoiceGrid({title,items,selected,onChange,limit=999}){ return <LimitedChoiceGrid title={title} items={items} selected={selected} onChange={onChange} limit={limit}/> }
 function RuleBox({title,text}){ const [open,setOpen]=useState(false); const formatted=useMemo(()=>formatRuleText(text||''),[text]); return <div className="ruleBox readable"><h3>{title}</h3><p>{formatted.slice(0,900)}{formatted.length>900?'...':''}</p>{formatted.length>900&&<button onClick={()=>setOpen(true)}>Ver texto completo</button>}{open&&<ModalText title={title} text={formatted} onClose={()=>setOpen(false)}/>}</div> }
 const FLAVOR_SKIP_RE = /(\d|bônus|recebe|ganha|ganham|torna[- ]se|treinado|treinada|PV\b|PE\b|CD\b|teste de|Teste de|dano|nível|ação bônus|ação comum|ação completa|reação|vantagem|desvantagem|redução|resistência|Defesa|Iniciativa|Atenção|escolha|escolhe)/;
@@ -538,13 +552,64 @@ function WeaponCatalogGroup({items,dispatch,character}){
 
 function detectSpecMilestones(text=''){ const out=[]; String(text).split(/\n/).forEach(line=>{ if(/No (primeiro|\d|\d+º)|Nos níveis|No nível/.test(line) && line.length<240) out.push(line.trim()); }); return out.slice(0,20); }
 
-function Cursed({c,dispatch}){ const groups=groupAptitudes(); const max=aptitudeLimit(c); const lvlMax=aptitudeLevelPointLimit(c); const lvlUsed=aptitudeLevelTotal(c); const levels=getAptitudeLevels(c); const cfg=specTrainingConfig(c); return <section className="grid gap"><Panel title="Aspectos de Técnica e Aptidões"><div className="grid2"><div className="miniPanel"><h3>Aspectos de Técnica</h3><Stat label="Nível de Habilidades" value="1º"/><Stat label="Habilidades Conhecidas" value={(c.technique.passives.length+c.technique.actives.length)}/><Field label="Atributo de Técnica" help="Mesmo Atributo de CD escolhido em Criação Guiada — as opções seguem a especialização atual."><Select value={c.cdAttribute} onChange={v=>dispatch({type:'update',key:'cdAttribute',value:v})}><option value="">—</option>{ATTRS.filter(([k])=>cfg.cdAttributes.includes(k)).map(([k,l])=><option key={k} value={k}>{l}</option>)}</Select></Field></div><div className="miniPanel"><h3>Níveis de Aptidão</h3><p className="muted">Distribuídos: {lvlUsed}/{lvlMax}. Cada aptidão vai de 0 a 5. Nível 1 começa com tudo 0.</p>{['Aura','Controle e Leitura','Barreira','Domínio','Energia Reversa'].map(g=><div key={g} className="aptLevelRow"><span>{g}</span><div><button disabled={levels[g]<=0} onClick={()=>dispatch({type:'setAptitudeLevel',key:g,value:levels[g]-1})}>−</button><b>{levels[g]}</b><button disabled={levels[g]>=5||lvlUsed>=lvlMax} onClick={()=>dispatch({type:'setAptitudeLevel',key:g,value:levels[g]+1})}>+</button></div><Tooltip text={aptitudeHelp(g)}/></div>)}</div></div></Panel><Panel title={`Aptidões Amaldiçoadas: ${(c.choices.aptitudes||[]).length} / ${max}`}><p className="muted">Você recebe uma aptidão amaldiçoada sempre que sobe de nível, exceto Restringido. O app bloqueia excesso e sinaliza pré-requisitos detectados no texto.</p>{Object.entries(groups).map(([group,items])=><details key={group} open={group==='Aura'}><summary>{group} · {items.length}</summary><ChoiceCards items={items} selected={c.choices.aptitudes||[]} limit={max} character={c} onChange={arr=>dispatch({type:'choice',key:'aptitudes',value:clampSelection(arr,rules.aptitudes.map(a=>a.id),max)})}/></details>)}</Panel><Panel title="Técnica"><TechniqueEditor c={c} dispatch={dispatch}/></Panel></section> }
+function Cursed({c,dispatch}){
+  const groups=groupAptitudes(); const max=aptitudeLimit(c); const lvlMax=aptitudeLevelPointLimit(c); const lvlUsed=aptitudeLevelTotal(c); const levels=getAptitudeLevels(c); const cfg=specTrainingConfig(c);
+  const autoGrants=specAutoAptitudeGrants(c); const autoIds=new Set(autoGrants.map(g=>g.id));
+  return <section className="grid gap"><Panel title="Aspectos de Técnica e Aptidões"><div className="grid2"><div className="miniPanel"><h3>Aspectos de Técnica</h3><Stat label="Nível de Habilidades" value="1º"/><Stat label="Habilidades Conhecidas" value={(c.technique.passives.length+c.technique.actives.length)}/><Field label="Atributo de Técnica" help="Mesmo Atributo de CD escolhido em Criação Guiada — as opções seguem a especialização atual."><Select value={c.cdAttribute} onChange={v=>dispatch({type:'update',key:'cdAttribute',value:v})}><option value="">—</option>{ATTRS.filter(([k])=>cfg.cdAttributes.includes(k)).map(([k,l])=><option key={k} value={k}>{l}</option>)}</Select></Field></div><div className="miniPanel"><h3>Níveis de Aptidão</h3><p className="muted">Distribuídos: {lvlUsed}/{lvlMax}. Cada aptidão vai de 0 a 5. Nível 1 começa com tudo 0.</p>{['Aura','Controle e Leitura','Barreira','Domínio','Energia Reversa'].map(g=><div key={g} className="aptLevelRow"><span>{g}</span><div><button disabled={levels[g]<=0} onClick={()=>dispatch({type:'setAptitudeLevel',key:g,value:levels[g]-1})}>−</button><b>{levels[g]}</b><button disabled={levels[g]>=5||lvlUsed>=lvlMax} onClick={()=>dispatch({type:'setAptitudeLevel',key:g,value:levels[g]+1})}>+</button></div><Tooltip text={aptitudeHelp(g)}/></div>)}</div></div></Panel><Panel title={`Aptidões Amaldiçoadas: ${(c.choices.aptitudes||[]).length} / ${max}`}><p className="muted">Você recebe uma aptidão amaldiçoada sempre que sobe de nível, exceto Restringido. O app bloqueia excesso e sinaliza pré-requisitos detectados no texto.</p>{autoGrants.length>0&&<div className="notice good"><b>Aptidões automáticas da especialização (não gastam sua vaga normal):</b>{autoGrants.map(g=><div key={g.id} className={g.unlocked?'':'muted small'}>{g.item.name} — {g.unlocked?'liberada':`libera no nível ${g.level}`}</div>)}</div>}{Object.entries(groups).map(([group,items])=>{ const visible=items.filter(i=>!autoIds.has(i.id)); return <details key={group} open={group==='Aura'}><summary>{group} · {visible.length}</summary><ChoiceCards items={visible} selected={c.choices.aptitudes||[]} limit={max} character={c} onChange={arr=>dispatch({type:'choice',key:'aptitudes',value:clampSelection(arr,rules.aptitudes.map(a=>a.id),max)})}/></details>; })}</Panel><Panel title="Técnica"><TechniqueEditor c={c} dispatch={dispatch}/></Panel></section>;
+}
 function aptitudeHelp(g){ return ({Aura:'Conhecimento e compreensão sobre a própria energia amaldiçoada.', 'Controle e Leitura':'Liberar, controlar e ler fluxos/aura de energia.', Barreira:'Uso e refinamento de técnicas de barreira.', Domínio:'Aptidão em técnicas de domínio e expansão.', 'Energia Reversa':'Proficiência no uso da energia reversa para regeneração e cura.'})[g]||''; }
-function ChoiceCards({items,selected,onChange,limit=999,character=null}){ const [q,setQ]=useState(''); const [modal,setModal]=useState(null); const filtered=items.filter(i=>(i.name+' '+(i.originalText||'')).toLowerCase().includes(q.toLowerCase())); return <><Field label="Buscar"><input value={q} onChange={e=>setQ(e.target.value)}/></Field><div className="cards">{filtered.map(i=>{ const checked=selected.includes(i.id); const req=character?aptitudeRequirementStatus(character,i):{ok:true}; const blocked=(!checked && selected.length>=limit)||(!checked&&!req.ok); return <div key={i.id} className={checked?'feature selected':'feature'}><div className="row"><h3>{i.name}</h3><input type="checkbox" checked={checked} disabled={blocked} onChange={e=>onChange(e.target.checked?[...selected,i.id]:selected.filter(x=>x!==i.id))}/><button className="q" onClick={()=>setModal(i)}>?</button></div>{getPrereqText(i)&&<small className={req.ok?'okText':'warn'}>Pré-requisito: {getPrereqText(i)}</small>}<p>{mechanicalPreview(i.originalText,320)}</p>{!req.ok&&<small className="warn">Bloqueado: falta {req.problems?.join(', ')}</small>}{!checked&&selected.length>=limit&&<small className="warn">Limite atingido.</small>}</div>})}</div>{modal&&<ModalText title={modal.name} text={formatRuleText(modal.originalText||'')} onClose={()=>setModal(null)}/>}</> }
+function ChoiceCards({items,selected,onChange,limit=999,character=null}){ const [q,setQ]=useState(''); const [modal,setModal]=useState(null); const filtered=items.filter(i=>(i.name+' '+(i.originalText||'')).toLowerCase().includes(q.toLowerCase())); return <><Field label="Buscar"><input value={q} onChange={e=>setQ(e.target.value)}/></Field><div className="cards">{filtered.map(i=>{ const checked=selected.includes(i.id); const req=character?aptitudeRequirementStatus(character,i):{ok:true}; const blocked=(!checked && selected.length>=limit)||(!checked&&!req.ok); return <div key={i.id} className={checked?'feature selected':'feature'}><div className="row"><h3>{i.name}</h3><input type="checkbox" checked={checked} disabled={blocked} onChange={e=>onChange(e.target.checked?[...selected,i.id]:selected.filter(x=>x!==i.id))}/><button className="q" onClick={()=>setModal(i)}>?</button></div>{getPrereqText(i)&&<small className={req.ok?'okText':'warn'}>Pré-requisito: {getPrereqText(i)}</small>}<p>{mechanicalPreview(i.originalText,320)}</p>{!req.ok&&<small className="warn">Bloqueado: falta {req.problems?.join(', ')}</small>}{!checked&&selected.length>=limit&&<small className="warn">Limite atingido.</small>}<BookPageButton pageNumber={bookPageIndex[i.id]} title={i.name}/></div>})}</div>{modal&&<ModalText title={modal.name} text={formatRuleText(modal.originalText||'')} onClose={()=>setModal(null)}/>}</> }
 let pdfjsLibPromise=null;
 function loadPdfJs(){
   if(!pdfjsLibPromise) pdfjsLibPromise=Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]).then(([lib,worker])=>{ lib.GlobalWorkerOptions.workerSrc=worker.default; return lib; });
   return pdfjsLibPromise;
+}
+let bookPdfPromise=null;
+function loadBookPdf(){
+  if(!bookPdfPromise) bookPdfPromise=loadPdfJs().then(lib=>lib.getDocument({url:'/livro-regras.pdf'}).promise);
+  return bookPdfPromise;
+}
+function BookPageModal({pageNumber,title,onClose}){
+  const canvasRef=React.useRef(null);
+  const [status,setStatus]=useState('loading');
+  useEffect(()=>{
+    let cancelled=false;
+    (async()=>{
+      try{
+        const pdf=await loadBookPdf();
+        const page=await pdf.getPage(pageNumber);
+        if(cancelled) return;
+        const viewport=page.getViewport({scale:1.6});
+        const canvas=canvasRef.current;
+        if(!canvas) return;
+        canvas.width=viewport.width;
+        canvas.height=viewport.height;
+        const ctx=canvas.getContext('2d');
+        await page.render({canvasContext:ctx, viewport}).promise;
+        if(!cancelled) setStatus('ready');
+      }catch(err){
+        console.error(err);
+        if(!cancelled) setStatus('error');
+      }
+    })();
+    return ()=>{ cancelled=true; };
+  },[pageNumber]);
+  return <div className="modalOverlay" onClick={onClose}><div className="modal bookPageModal" onClick={e=>e.stopPropagation()}>
+    <div className="modalHead"><h2>{title||`Página ${pageNumber} do livro`}</h2><button onClick={onClose}>Fechar</button></div>
+    <div className="bookPageBody">
+      {status==='loading'&&<p className="muted">Carregando página do livro...</p>}
+      {status==='error'&&<p className="warn">Não foi possível carregar a página do livro.</p>}
+      <canvas ref={canvasRef} className="bookPageCanvas" style={{display:status==='ready'?'block':'none'}}/>
+    </div>
+  </div></div>;
+}
+function BookPageButton({pageNumber,title}){
+  const [open,setOpen]=useState(false);
+  if(!pageNumber) return null;
+  return <>
+    <button type="button" className="bookPageBtn" onClick={()=>setOpen(true)}><BookOpen size={14}/> Ver página do livro</button>
+    {open&&<BookPageModal pageNumber={pageNumber} title={title} onClose={()=>setOpen(false)}/>}
+  </>;
 }
 async function extractPdfText(file){
   const pdfjsLib = await loadPdfJs();
@@ -872,10 +937,21 @@ const COMBAT_ACTION_CATALOG = buildCombatActionCatalog();
 function ActionTypeCard({info}){ return <div className="actionTypeCard"><b>{info.name}</b><Tooltip text={info.text}/></div> }
 function ActionSubCard({a}){ const [open,setOpen]=useState(false); const txt=formatRuleText(a.text||''); return <div className="actionCard"><h3>{a.name}</h3><div className="textPreview actionText">{txt.slice(0,300)}{txt.length>300?'...':''}</div>{txt.length>300&&<button onClick={()=>setOpen(true)}>Ver ação completa</button>}{open&&<ModalText title={a.name} text={txt} onClose={()=>setOpen(false)}/>}</div> }
 function ActionTypeGroup({title,items}){ const [open,setOpen]=useState(false); if(!items?.length) return null; return <details className="collapseBox actionTypeGroup" open={open} onToggle={e=>setOpen(e.currentTarget.open)}><summary>{title} <small>{items.length}</small></summary><div className="actionList improved">{items.map(a=><ActionSubCard key={a.id} a={a}/>)}</div></details> }
+function QuickAbilityRow({item}){
+  const [open,setOpen]=useState(false);
+  const pageNumber=bookPageIndex[item.id];
+  return <div className="toolkitRow">
+    <b>{item.name}</b>
+    {item.tag&&<span className="pill mini">{item.tag}</span>}
+    <button className="toolkitViewBtn" onClick={()=>setOpen(true)}>Ver texto</button>
+    <BookPageButton pageNumber={pageNumber} title={item.name}/>
+    {open&&<ModalText title={item.name} text={formatRuleText(item.text||'Sem descrição cadastrada.')} onClose={()=>setOpen(false)}/>}
+  </div>;
+}
 function QuickAbilityList({title,items,defaultOpen,emptyText}){
   return <details className="collapseBox toolkitGroup" open={defaultOpen}>
     <summary>{title} <small>{items.length}</small></summary>
-    {items.length===0 ? <p className="muted small">{emptyText||'Nada cadastrado ainda.'}</p> : <div className="toolkitList">{items.map((it,i)=><div key={it.id||i} className="toolkitRow"><b>{it.name}</b>{it.tag&&<span className="pill mini">{it.tag}</span>}<Tooltip text={it.text||'Sem descrição cadastrada.'}/></div>)}</div>}
+    {items.length===0 ? <p className="muted small">{emptyText||'Nada cadastrado ainda.'}</p> : <div className="toolkitList">{items.map((it,i)=><QuickAbilityRow key={it.id||i} item={it}/>)}</div>}
   </details>;
 }
 function AvailableToolkitPanel({c}){
@@ -1055,13 +1131,16 @@ function levelUpPoolBreakdown(c){
 function ClassFeatureChoiceCard({feature,selected,blocked,lockedReason,onToggle}){
   const [open,setOpen]=useState(false);
   const txt=formatRuleText(feature.text||'');
-  return <div className={`selectCard classAbilityCard ${selected?'selected':''} ${blocked?'blocked':''}`}>
-    <div className="selectCardHead"><h3>{feature.title}</h3>{feature.level&&<span className="pill">Nível {feature.level}</span>}</div>
-    <label className="choiceLine"><input type="checkbox" checked={selected} disabled={blocked && !selected} onChange={onToggle}/><b>{selected?'Selecionado':'Selecionar'}</b></label>
-    <div className="selectPreview readableText">{mechanicalPreview(feature.text,380)}</div>
-    <button onClick={()=>setOpen(true)}>Ler texto completo</button>
+  return <div className={selected?'feature selected':'feature'}>
+    <div className="row">
+      <h3>{feature.title}</h3>
+      {feature.level&&<span className="pill mini">Nível {feature.level}</span>}
+      <input type="checkbox" checked={selected} disabled={blocked && !selected} onChange={onToggle}/>
+      <button className="q" onClick={()=>setOpen(true)}>?</button>
+    </div>
     {blocked&&!selected&&<small className="warn">{lockedReason||'Limite atingido'}</small>}
-    {open&&<ModalText title={feature.title} text={txt} onClose={()=>setOpen(false)}/>} 
+    <p>{mechanicalPreview(feature.text,380)}</p>
+    {open&&<ModalText title={feature.title} text={txt} onClose={()=>setOpen(false)}/>}
   </div>
 }
 
@@ -1223,8 +1302,10 @@ function ClassBaseCard({feature,c,dispatch}){
   const options=optionNamesFromFeatureText(feature.text||'');
   const value=c.choices?.baseFeatureChoices?.[feature.id]||[];
   const selected=Array.isArray(value)?value:(value?[value]:[]);
-  return <div className="selectCard readonly baseChoiceCard">
-    <div className="selectCardHead"><h3>{feature.title}</h3><span className="pill">Automática</span></div>
+  const level=Number(feature.level||1);
+  const available=Number(c.level||1)>=level;
+  return <div className={available?'selectCard readonly baseChoiceCard':'selectCard readonly baseChoiceCard locked'}>
+    <div className="selectCardHead"><h3>{feature.title}</h3><span className={available?'pill':'pill mutedPill'}>{available?'Liberado':`Nível ${level}`}</span></div>
     <div className="selectPreview readableText">{mechanicalPreview(feature.text,480)}</div>
     {needsChoice&&<div className="choiceBlock"><h4>Escolha exigida por esta habilidade</h4>{options.length?<div className="chipGrid">{options.map(opt=><label key={opt} className={selected.includes(opt)?'chipCheck active':'chipCheck'}><input type="checkbox" checked={selected.includes(opt)} onChange={()=>dispatch({type:'choiceObject',key:'baseFeatureChoices',id:feature.id,value:toggleArrayValue(selected,opt)})}/>{opt}</label>)}</div>:<div className="notice">Não foi possível detectar uma lista fechada de opções no texto extraído. Revise no texto completo e selecione a opção no compêndio/admin quando o banco for revisado.</div>}</div>}
     <button onClick={()=>setOpen(true)}>Ler texto completo</button>
