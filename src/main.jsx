@@ -870,6 +870,31 @@ const COMBAT_ACTION_CATALOG = buildCombatActionCatalog();
 function ActionTypeCard({info}){ return <div className="actionTypeCard"><b>{info.name}</b><Tooltip text={info.text}/></div> }
 function ActionSubCard({a}){ const [open,setOpen]=useState(false); const txt=formatRuleText(a.text||''); return <div className="actionCard"><h3>{a.name}</h3><div className="textPreview actionText">{txt.slice(0,300)}{txt.length>300?'...':''}</div>{txt.length>300&&<button onClick={()=>setOpen(true)}>Ver ação completa</button>}{open&&<ModalText title={a.name} text={txt} onClose={()=>setOpen(false)}/>}</div> }
 function ActionTypeGroup({title,items}){ const [open,setOpen]=useState(false); if(!items?.length) return null; return <details className="collapseBox actionTypeGroup" open={open} onToggle={e=>setOpen(e.currentTarget.open)}><summary>{title} <small>{items.length}</small></summary><div className="actionList improved">{items.map(a=><ActionSubCard key={a.id} a={a}/>)}</div></details> }
+function QuickAbilityList({title,items,defaultOpen,emptyText}){
+  return <details className="collapseBox toolkitGroup" open={defaultOpen}>
+    <summary>{title} <small>{items.length}</small></summary>
+    {items.length===0 ? <p className="muted small">{emptyText||'Nada cadastrado ainda.'}</p> : <div className="toolkitList">{items.map((it,i)=><div key={it.id||i} className="toolkitRow"><b>{it.name}</b>{it.tag&&<span className="pill mini">{it.tag}</span>}<Tooltip text={it.text||'Sem descrição cadastrada.'}/></div>)}</div>}
+  </details>;
+}
+function AvailableToolkitPanel({c}){
+  const sp=specialization(c);
+  const activeTechs=(c.technique.actives||[]).filter(f=>f.available!==false).map(f=>({id:f.id,name:f.name,tag:[f.grade,f.action].filter(Boolean).join(' · '),text:f.text}));
+  const passiveTechs=(c.technique.passives||[]).filter(f=>f.available!==false).map(f=>({id:f.id,name:f.name,tag:f.grade,text:f.text}));
+  const talentPool=talentsPool(c);
+  const talents=(c.choices?.talents||[]).map(id=>talentPool.find(t=>t.id===id)).filter(Boolean).map(t=>({id:t.id,name:t.name,text:t.originalText}));
+  const aptitudes=(c.choices?.aptitudes||[]).map(id=>rules.aptitudes.find(a=>a.id===id)).filter(Boolean).map(a=>({id:a.id,name:a.name,text:a.originalText}));
+  const featurePool=splitClassFeatures(sp).choice;
+  const features=(c.choices?.mundaneFeatures||[]).map(id=>featurePool.find(f=>f.id===id)).filter(Boolean).map(f=>({id:f.id,name:f.title,tag:f.level?`Nível ${f.level}`:'',text:f.text}));
+  const summons=(c.summons||[]).map(s=>({id:s.id,name:s.name,tag:`PV ${s.hpCurrent??s.hpMax}/${s.hpMax}`,text:(s.traits||[]).map(t=>t.name).join(', ')}));
+  return <Panel title="O que você tem disponível" help="Resumo rápido de tudo que você já escolheu e pode usar em combate — técnicas, talentos, aptidões e habilidades de classe. Toque no '?' para ver o texto completo de cada uma.">
+    <QuickAbilityList title="Técnicas Ativas (Feitiços)" items={activeTechs} defaultOpen emptyText="Nenhuma técnica ativa disponível agora — cadastre ou marque como disponível na aba Técnicas."/>
+    <QuickAbilityList title="Técnicas Passivas" items={passiveTechs} defaultOpen emptyText="Nenhuma técnica passiva disponível agora — cadastre ou marque como disponível na aba Técnicas."/>
+    <QuickAbilityList title="Talentos" items={talents} emptyText="Nenhum talento escolhido ainda (Perfil Mundano)."/>
+    <QuickAbilityList title="Aptidões Amaldiçoadas" items={aptitudes} emptyText="Nenhuma aptidão escolhida ainda (Perfil Amaldiçoado)."/>
+    <QuickAbilityList title="Habilidades de Classe" items={features} emptyText="Nenhuma habilidade de classe escolhida ainda (Perfil Mundano)."/>
+    {summons.length>0 && <QuickAbilityList title="Invocações" items={summons} defaultOpen/>}
+  </Panel>;
+}
 function CombatSheet({c,dispatch,stats}){
   const [dmg,setDmg]=useState(''); const [heal,setHeal]=useState(''); const [pe,setPe]=useState(''); const [stam,setStam]=useState('');
   const [tempHp,setTempHp]=useState(''); const [tempPe,setTempPe]=useState('');
@@ -893,6 +918,8 @@ function CombatSheet({c,dispatch,stats}){
     <Panel title={`Equipamento equipado (${equipped.filter(i=>i.type==='weapon'||i.type==='shield').length})`}>
       <div className="cards">{equipped.filter(i=>i.type==='weapon'||i.type==='shield').map(i=><WeaponCard key={i.instanceId} item={i} compact character={c}/>)}{equipped.filter(i=>i.type==='weapon'||i.type==='shield').length===0&&<p className="muted">Nenhuma arma ou escudo equipado.</p>}</div>
     </Panel>
+    <AvailableToolkitPanel c={c}/>
+    <Panel title="Anotações de combos" help="Espaço livre para anotar sequências de ações, combos com aliados ou lembretes de jogo — nada aqui afeta os cálculos da ficha."><textarea placeholder="Ex.: Fintar (ação bônus) para deixar desprevenido, depois Investida com a espada..." value={c.combat.comboNotes||''} onChange={e=>dispatch({type:'combat',key:'comboNotes',value:e.target.value})}/></Panel>
     <Panel title="Ações de Combate" help="As 6 categorias de ação existem em todo turno; abaixo delas, os usos padrão de cada uma. Habilidades de Especialização/Técnica liberam mais opções.">
       <div className="actionTypeGrid">{ACTION_TYPE_INFO.map(info=><ActionTypeCard key={info.id} info={info}/>)}</div>
       <p className="muted small">{ACTION_HIERARCHY_NOTE}</p>
@@ -906,7 +933,31 @@ function CombatSheet({c,dispatch,stats}){
     <Panel title="Log de sessão"><div className="log">{c.combat.log.map(l=><div key={l.id}><span>{new Date(l.at).toLocaleTimeString()}</span>{l.label}</div>)}</div></Panel>
   </section>;
 }
-function TechList({title,keyName,list,dispatch}){ return <div><h3>{title}: {list.length}</h3><button onClick={()=>dispatch({type:'addTechFeature',key:keyName})}>Adicionar {title}</button><div className="cards">{list.map(f=><div className="feature" key={f.id}><div className="grid3"><Field label="Nome"><input value={f.name} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'name',value:e.target.value})}/></Field><Field label="Grau"><input value={f.grade} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'grade',value:e.target.value})}/></Field><Field label="Custo"><input value={f.cost} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'cost',value:e.target.value})}/></Field></div><div className="grid3"><Field label="Alvo"><input value={f.target||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'target',value:e.target.value})}/></Field><Field label="Área"><input value={f.area||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'area',value:e.target.value})}/></Field><Field label="Duração"><input value={f.duration||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'duration',value:e.target.value})}/></Field></div><Field label="Link de imagem/print da habilidade"><input placeholder="https://..." value={f.imageUrl||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'imageUrl',value:e.target.value})}/></Field>{f.imageUrl&&<img className="techPreview" src={f.imageUrl} alt="Print da habilidade"/>}<textarea value={f.text} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'text',value:e.target.value})}/><button className="danger" onClick={()=>dispatch({type:'removeTechFeature',key:keyName,id:f.id})}>Remover</button></div>)}</div></div> }
+function TechFeatureCard({f,keyName,dispatch}){
+  const available=f.available!==false;
+  const toggleAvailable=()=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'available',value:!available});
+  return <details className={available?'techFeatureCard':'techFeatureCard unavailable'} open={available}>
+    <summary>
+      <label className="choiceLine" onClick={e=>e.stopPropagation()}><input type="checkbox" checked={available} onChange={toggleAvailable}/><b>Disponível agora</b></label>
+      <span className="techFeatureName">{f.name||'Sem nome'}</span>
+      <span className="pill mini">{f.grade||'—'}</span>
+      {!available&&<span className="pill mini warnPill">Bloqueada</span>}
+    </summary>
+    <div className="techFeatureBody">
+      <Field label="Nome"><input value={f.name} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'name',value:e.target.value})}/></Field>
+      <div className="grid2"><Field label="Grau"><input value={f.grade} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'grade',value:e.target.value})}/></Field><Field label="Custo"><input value={f.cost} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'cost',value:e.target.value})}/></Field></div>
+      <div className="grid3"><Field label="Alvo"><input value={f.target||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'target',value:e.target.value})}/></Field><Field label="Área"><input value={f.area||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'area',value:e.target.value})}/></Field><Field label="Duração"><input value={f.duration||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'duration',value:e.target.value})}/></Field></div>
+      <Field label="Link de imagem/print da habilidade"><input placeholder="https://..." value={f.imageUrl||''} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'imageUrl',value:e.target.value})}/></Field>
+      {f.imageUrl&&<img className="techPreview" src={f.imageUrl} alt="Print da habilidade"/>}
+      <textarea value={f.text} onChange={e=>dispatch({type:'updateTechFeature',key:keyName,id:f.id,field:'text',value:e.target.value})}/>
+      <button className="danger" onClick={()=>dispatch({type:'removeTechFeature',key:keyName,id:f.id})}>Remover</button>
+    </div>
+  </details>;
+}
+function TechList({title,keyName,list,dispatch}){
+  const availableCount=list.filter(f=>f.available!==false).length;
+  return <div><h3>{title}: {availableCount}/{list.length} disponíveis</h3><button onClick={()=>dispatch({type:'addTechFeature',key:keyName})}>Adicionar {title}</button><div className="techFeatureCards">{list.map(f=><TechFeatureCard key={f.id} f={f} keyName={keyName} dispatch={dispatch}/>)}</div></div>;
+}
 
 
 

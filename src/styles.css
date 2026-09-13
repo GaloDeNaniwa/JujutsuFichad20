@@ -99,6 +99,23 @@ tr.activeRow{background:rgba(247,196,83,.14)}tr.activeRow td{color:var(--gold)}
 .pill.mutedPill{color:var(--muted,#9a8f78);border-color:var(--line);font-weight:600}
 @media(max-width:520px){.classChoiceGrid,.choiceCardGrid{grid-template-columns:1fr}}
 
+/* v10 — cards de técnica (passivas/ativas) legíveis, com marcação de disponibilidade */
+.techFeatureCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;margin-top:10px}
+.techFeatureCard{background:#090807;border:1px solid var(--line);border-radius:14px;padding:14px}
+.techFeatureCard.unavailable{opacity:.55}
+.techFeatureCard summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;color:var(--text);font-weight:400}
+.techFeatureCard summary .choiceLine{padding:4px 8px;flex-shrink:0}
+.techFeatureName{flex:1;min-width:120px;font-weight:800;color:var(--gold);font-size:1.05rem}
+.warnPill{border-color:#7b2222;color:#ffb3b3;background:rgba(123,34,34,.15)}
+.techFeatureBody{display:grid;gap:10px;margin-top:12px}
+
+/* v10 — resumo do que o personagem tem disponível em combate */
+.toolkitGroup{margin-top:8px}
+.toolkitList{display:grid;gap:6px;margin-top:8px}
+.toolkitRow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#0a0908}
+.toolkitRow b{flex:1}
+.pill.mini{font-size:.7rem;padding:2px 6px}
+
 /* v10 — referência de tipos de ação e listas de ações de combate */
 .actionTypeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
 .actionTypeCard{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;background:#0a0908;font-weight:700;color:var(--gold)}
